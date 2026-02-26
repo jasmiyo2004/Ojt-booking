@@ -2,12 +2,15 @@ namespace BookingApi.Models
 {
     public class Customer
     {
-        public int CustomerId { get; set; }
+        public short CustomerId { get; set; }
         public string CustomerCd { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string MiddleName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public int PartyTypeId { get; set; }
-        public string PartyTypeDesc { get; set; } = string.Empty;
+        
+        public string? CreateUserId { get; set; }
+        public DateTime? CreateDttm { get; set; }
+        public string? UpdateUserId { get; set; }
+        public DateTime? UpdateDttm { get; set; }
+
+        // Navigation property
+        public CustomerInformation? CustomerInformation { get; set; }
     }
 }

@@ -102,4 +102,20 @@ class SuccessDialog extends StatelessWidget {
       ),
     );
   }
+
+  /// Show success dialog for booking update
+  static void showUpdateSuccess(
+    BuildContext context, {
+    required String bookingNumber,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SuccessDialog(
+        title: 'UPDATE BOOKING',
+        message: 'Booking Number: $bookingNumber was successfully updated.',
+        bookingNumber: null, // Don't show the "Booking number is..." text
+      ),
+    );
+  }
 }

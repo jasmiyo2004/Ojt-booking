@@ -8,6 +8,19 @@ class Booking {
   final DateTime departureDate;
   final String status; // BOOKED, COMPLETED, CANCELLED
 
+  // IDs for editing
+  final int? originLocationId;
+  final int? destinationLocationId;
+  final int? vesselId;
+  final int? vesselScheduleId;
+  final int? equipmentId;
+  final int? commodityId;
+  final int? containerId;
+  final int? paymentModeId;
+  final int? agreementPartyId;
+  final int? shipperPartyId;
+  final int? consigneePartyId;
+
   // Parties
   final String? agreementParty;
   final String? shipperParty;
@@ -28,6 +41,10 @@ class Booking {
 
   // Vessel & Trucking
   final String? vesselName;
+  final String? vesselSchedulePol;
+  final String? vesselSchedulePod;
+  final String? vesselScheduleEtd;
+  final String? vesselScheduleEta;
   final String? trucker;
   final String? plateNumber;
   final String? driver;
@@ -45,6 +62,17 @@ class Booking {
     required this.bookingDate,
     required this.departureDate,
     required this.status,
+    this.originLocationId,
+    this.destinationLocationId,
+    this.vesselId,
+    this.vesselScheduleId,
+    this.equipmentId,
+    this.commodityId,
+    this.containerId,
+    this.paymentModeId,
+    this.agreementPartyId,
+    this.shipperPartyId,
+    this.consigneePartyId,
     this.agreementParty,
     this.shipperParty,
     this.consigneeParty,
@@ -58,6 +86,10 @@ class Booking {
     this.containerNumber,
     this.seal,
     this.vesselName,
+    this.vesselSchedulePol,
+    this.vesselSchedulePod,
+    this.vesselScheduleEtd,
+    this.vesselScheduleEta,
     this.trucker,
     this.plateNumber,
     this.driver,
@@ -67,63 +99,121 @@ class Booking {
 
   // Convert JSON from API to Booking object
   factory Booking.fromJson(Map<String, dynamic> json) {
+    // Debug: Print the raw JSON to see what we're receiving
+    print('DEBUG - Booking JSON: ${json.toString()}');
+
     // Extract party information from bookingParties array
     String? agreementParty;
     String? shipperParty;
     String? consigneeParty;
+    int? agreementPartyId;
+    int? shipperPartyId;
+    int? consigneePartyId;
 
     if (json['bookingParties'] != null) {
+      print('DEBUG - bookingParties: ${json['bookingParties']}');
       final parties = json['bookingParties'] as List;
       for (var party in parties) {
         final partyTypeId = party['partyTypeId'];
         final customer = party['customer'];
+        print('DEBUG - Party: partyTypeId=$partyTypeId, customer=$customer');
         if (customer != null) {
-          final customerName =
-              '${customer['firstName'] ?? ''} ${customer['middleName'] ?? ''} ${customer['lastName'] ?? ''}'
-                  .trim();
+          String customerName = 'Unknown';
+
+          // Customer info is directly in the customer object (DTO structure)
+          if (customer['firstName'] != null ||
+              customer['middleName'] != null ||
+              customer['lastName'] != null) {
+            // Build name from non-null parts only, excluding "NULL" strings
+            final nameParts = <String>[];
+            final firstName = customer['firstName']?.toString() ?? '';
+            final middleName = customer['middleName']?.toString() ?? '';
+            final lastName = customer['lastName']?.toString() ?? '';
+
+            if (firstName.isNotEmpty && firstName.toUpperCase() != 'NULL') {
+              nameParts.add(firstName);
+            }
+            if (middleName.isNotEmpty && middleName.toUpperCase() != 'NULL') {
+              nameParts.add(middleName);
+            }
+            if (lastName.isNotEmpty && lastName.toUpperCase() != 'NULL') {
+              nameParts.add(lastName);
+            }
+
+            if (nameParts.isNotEmpty) {
+              customerName = nameParts.join(' ');
+            }
+            print('DEBUG - Customer name: $customerName');
+          }
+
           final customerCode = customer['customerCd'] ?? '';
+          final customerId = customer['customerId'];
           final fullDisplay = '$customerName ($customerCode)';
 
           if (partyTypeId == 10) {
             agreementParty = fullDisplay;
+            agreementPartyId = customerId;
           } else if (partyTypeId == 11) {
             shipperParty = fullDisplay;
+            shipperPartyId = customerId;
           } else if (partyTypeId == 12) {
             consigneeParty = fullDisplay;
+            consigneePartyId = customerId;
           }
         }
       }
     }
 
+    print('DEBUG - Container: ${json['container']}');
+    print('DEBUG - SealNumber: ${json['sealNumber']}');
+    print(
+      'DEBUG - Parties: agreement=$agreementParty, shipper=$shipperParty, consignee=$consigneeParty',
+    );
+
     return Booking(
       id: json['bookingId']?.toString() ?? '0',
       referenceNumber: json['bookingNo'] ?? 'N/A',
       route:
-          '${json['originLocation']?['locationDesc'] ?? 'Unknown'} ➔ ${json['destinationLocation']?['locationDesc'] ?? 'Unknown'}',
-      origin: json['originLocation']?['locationDesc'] ?? 'Unknown',
-      destination: json['destinationLocation']?['locationDesc'] ?? 'Unknown',
+          '${json['originLocationDesc'] ?? 'Unknown'} ➔ ${json['destinationLocationDesc'] ?? 'Unknown'}',
+      origin: json['originLocationDesc'] ?? 'Unknown',
+      destination: json['destinationLocationDesc'] ?? 'Unknown',
       bookingDate: json['createDttm'] != null
           ? DateTime.parse(json['createDttm'])
           : DateTime.now(),
       departureDate: json['vesselSchedule']?['etd'] != null
           ? DateTime.parse(json['vesselSchedule']['etd'])
           : DateTime.now(),
-      status: json['status']?['statusDesc'] ?? 'PENDING',
+      status: json['statusDesc'] ?? 'PENDING',
+      // IDs for editing
+      originLocationId: json['originLocationId'],
+      destinationLocationId: json['destinationLocationId'],
+      vesselId: json['vesselId'],
+      vesselScheduleId: json['vesselSchedule']?['vesselScheduleId'],
+      equipmentId: json['equipmentId'],
+      commodityId: json['commodityId'],
+      containerId: json['containerId'],
+      paymentModeId: json['paymentModeId'],
+      agreementPartyId: agreementPartyId,
+      shipperPartyId: shipperPartyId,
+      consigneePartyId: consigneePartyId,
+      // Display values
       agreementParty: agreementParty,
       shipperParty: shipperParty,
       consigneeParty: consigneeParty,
       modeOfService: 'N/A', // TransportService not included yet
-      modeOfPayment: json['paymentMode']?['paymentModeDesc'],
-      commodityName: json['commodity']?['commodityDesc'],
-      equipmentType: json['equipment']?['equipmentDesc'],
+      modeOfPayment: json['paymentModeDesc'],
+      commodityName: json['commodityDesc'],
+      equipmentType: json['equipmentDesc'],
       declaredValue: json['declaredValue']?.toString(),
       cargoDescription: json['cargoDescription'],
       weight: json['weight']?.toString(),
-      containerNumber: json['container']?['containerNo'],
+      containerNumber: json['containerNo'],
       seal: json['sealNumber'],
-      vesselName:
-          json['vessel']?['vesselDesc'] ??
-          json['vesselSchedule']?['vessel']?['vesselDesc'],
+      vesselName: json['vesselDesc'] ?? json['vesselSchedule']?['vesselDesc'],
+      vesselSchedulePol: json['vesselSchedule']?['originPortDesc'],
+      vesselSchedulePod: json['vesselSchedule']?['destinationPortDesc'],
+      vesselScheduleEtd: json['vesselSchedule']?['etd'],
+      vesselScheduleEta: json['vesselSchedule']?['eta'],
       trucker: json['trucker'],
       plateNumber: json['plateNumber'],
       driver: json['driver'],

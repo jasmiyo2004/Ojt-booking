@@ -60,6 +60,6 @@ namespace BookingApi.Models
         public Container? Container { get; set; }
 
         // Navigation property for booking parties
-        public ICollection<BookingParty>? BookingParties { get; set; }
+        public ICollection<BookingParty> BookingParties { get; set; } = new List<BookingParty>();
     }
 }

@@ -138,6 +138,15 @@ C:\Users\OJT\Desktop\Gothong_Booking\ojt_booking_web\booking_api\obj\Debug\net8.
 C:\Users\OJT\Desktop\Gothong_Booking\ojt_booking_web\booking_api\obj\Debug\net8.0\BookingApi.pdb
 C:\Users\OJT\Desktop\Gothong_Booking\ojt_booking_web\booking_api\obj\Debug\net8.0\BookingApi.genruntimeconfig.cache
 C:\Users\OJT\Desktop\Gothong_Booking\ojt_booking_web\booking_api\obj\Debug\net8.0\ref\BookingApi.dll
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.csproj.AssemblyReference.cache
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.AssemblyInfoInputs.cache
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.AssemblyInfo.cs
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.csproj.CoreCompileInputs.cache
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.sourcelink.json
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\bin\Debug\net8.0\appsettings.json
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\bin\Debug\net8.0\BookingApi.staticwebassets.endpoints.json
@@ -255,14 +264,6 @@ C:\Users\OJT\Desktop\Gothong_Booking\booking_api\bin\Debug\net8.0\runtimes\win\l
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.csproj.AssemblyReference.cache
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\rpswa.dswa.cache.json
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.AssemblyInfoInputs.cache
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.AssemblyInfo.cs
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.csproj.CoreCompileInputs.cache
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -278,4 +279,3 @@ C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\refint\Booking
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.pdb
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.genruntimeconfig.cache
 C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\ref\BookingApi.dll
-C:\Users\OJT\Desktop\Gothong_Booking\booking_api\obj\Debug\net8.0\BookingApi.sourcelink.json

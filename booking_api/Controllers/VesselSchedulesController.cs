@@ -93,7 +93,7 @@ namespace BookingApi.Controllers
                 query += " ORDER BY vs.ETD";
 
                 var schedules = await _context.Database
-                    .SqlQueryRaw<VesselScheduleDto>(query, parameters.ToArray())
+                    .SqlQueryRaw<VesselScheduleDetailDto>(query, parameters.ToArray())
                     .ToListAsync();
 
                 return Ok(schedules);
@@ -106,7 +106,7 @@ namespace BookingApi.Controllers
     }
 
     // DTO for the query result
-    public class VesselScheduleDto
+    public class VesselScheduleDetailDto
     {
         public int VesselScheduleId { get; set; }
         public int OriginPortId { get; set; }

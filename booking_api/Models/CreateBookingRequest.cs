@@ -29,8 +29,8 @@ namespace BookingApi.Models
         public DateTime? UpdateDttm { get; set; }
 
         // Party IDs
-        public int? AgreementPartyId { get; set; }  // CustomerId for Agreement Party (PartyTypeId = 10)
-        public int? ShipperPartyId { get; set; }     // CustomerId for Shipper Party (PartyTypeId = 11)
-        public int? ConsigneePartyId { get; set; }   // CustomerId for Consignee Party (PartyTypeId = 12)
+        public short? AgreementPartyId { get; set; }  // CustomerId for Agreement Party (PartyTypeId = 10)
+        public short? ShipperPartyId { get; set; }     // CustomerId for Shipper Party (PartyTypeId = 11)
+        public short? ConsigneePartyId { get; set; }   // CustomerId for Consignee Party (PartyTypeId = 12)
     }
 }

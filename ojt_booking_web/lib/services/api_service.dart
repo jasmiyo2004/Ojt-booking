@@ -149,6 +149,44 @@ class ApiService {
     }
   }
 
+  /// Update booking with raw data (IDs)
+  Future<Map<String, dynamic>> updateBookingWithIds(
+    String id,
+    Map<String, dynamic> bookingData,
+  ) async {
+    try {
+      print('API Service: Updating booking $id with IDs: $bookingData');
+
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl/bookings/$id'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(bookingData),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      print('API Service: Response status: ${response.statusCode}');
+      print('API Service: Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // 204 No Content is also a valid success response for PUT
+        if (response.body.isNotEmpty) {
+          return json.decode(response.body);
+        } else {
+          // Return the input data if no body returned
+          return bookingData;
+        }
+      } else {
+        throw Exception(
+          'Failed to update booking: ${response.statusCode} - ${response.body}',
+        );
+      }
+    } catch (e) {
+      print('API Service: Error updating booking: $e');
+      rethrow;
+    }
+  }
+
   /// Update booking
   /// Later: PUT /api/bookings/{id}
   Future<Booking> updateBooking(String id, Booking booking) async {

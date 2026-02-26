@@ -26,12 +26,12 @@ namespace BookingApi.Controllers
                 // Filter for PartyTypeId = 10 (Agreement Party)
                 var query = @"
                     SELECT 
-                        CAST(c.CustomerId AS INT) AS CustomerId,
+                        CAST(c.CustomerId AS SMALLINT) AS CustomerId,
                         c.CustomerCd,
                         ISNULL(ci.FirstName, '') AS FirstName,
                         ISNULL(ci.MiddleName, '') AS MiddleName,
                         ISNULL(ci.LastName, '') AS LastName,
-                        CAST(ct.PartyTypeId AS INT) AS PartyTypeId,
+                        CAST(ct.PartyTypeId AS SMALLINT) AS PartyTypeId,
                         CASE 
                             WHEN ct.PartyTypeId = 10 THEN 'Agreement Party'
                             WHEN ct.PartyTypeId = 20 THEN 'Shipper Party'
@@ -44,7 +44,7 @@ namespace BookingApi.Controllers
                     WHERE ct.PartyTypeId = 10";
 
                 var customers = await _context.Database
-                    .SqlQueryRaw<CustomerDto>(query)
+                    .SqlQueryRaw<CustomerPartyDto>(query)
                     .ToListAsync();
 
                 return Ok(customers);
@@ -63,12 +63,12 @@ namespace BookingApi.Controllers
             {
                 var query = @"
                     SELECT 
-                        CAST(c.CustomerId AS INT) AS CustomerId,
+                        CAST(c.CustomerId AS SMALLINT) AS CustomerId,
                         c.CustomerCd,
                         ISNULL(ci.FirstName, '') AS FirstName,
                         ISNULL(ci.MiddleName, '') AS MiddleName,
                         ISNULL(ci.LastName, '') AS LastName,
-                        CAST(ct.PartyTypeId AS INT) AS PartyTypeId,
+                        CAST(ct.PartyTypeId AS SMALLINT) AS PartyTypeId,
                         CASE 
                             WHEN ct.PartyTypeId = 10 THEN 'Agreement Party'
                             WHEN ct.PartyTypeId = 11 THEN 'Shipper Party'
@@ -81,7 +81,7 @@ namespace BookingApi.Controllers
                     WHERE ct.PartyTypeId = 11";
 
                 var customers = await _context.Database
-                    .SqlQueryRaw<CustomerDto>(query)
+                    .SqlQueryRaw<CustomerPartyDto>(query)
                     .ToListAsync();
 
                 return Ok(customers);
@@ -100,12 +100,12 @@ namespace BookingApi.Controllers
             {
                 var query = @"
                     SELECT 
-                        CAST(c.CustomerId AS INT) AS CustomerId,
+                        CAST(c.CustomerId AS SMALLINT) AS CustomerId,
                         c.CustomerCd,
                         ISNULL(ci.FirstName, '') AS FirstName,
                         ISNULL(ci.MiddleName, '') AS MiddleName,
                         ISNULL(ci.LastName, '') AS LastName,
-                        CAST(ct.PartyTypeId AS INT) AS PartyTypeId,
+                        CAST(ct.PartyTypeId AS SMALLINT) AS PartyTypeId,
                         CASE 
                             WHEN ct.PartyTypeId = 10 THEN 'Agreement Party'
                             WHEN ct.PartyTypeId = 11 THEN 'Shipper Party'
@@ -118,7 +118,7 @@ namespace BookingApi.Controllers
                     WHERE ct.PartyTypeId = 12";
 
                 var customers = await _context.Database
-                    .SqlQueryRaw<CustomerDto>(query)
+                    .SqlQueryRaw<CustomerPartyDto>(query)
                     .ToListAsync();
 
                 return Ok(customers);
@@ -131,14 +131,14 @@ namespace BookingApi.Controllers
     }
 
     // DTO for customer data from joined tables
-    public class CustomerDto
+    public class CustomerPartyDto
     {
-        public int CustomerId { get; set; }
+        public short CustomerId { get; set; }
         public string CustomerCd { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string MiddleName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
-        public int PartyTypeId { get; set; }
+        public short PartyTypeId { get; set; }
         public string PartyTypeDesc { get; set; } = string.Empty;
     }
 }

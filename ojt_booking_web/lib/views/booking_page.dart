@@ -4,12 +4,17 @@ import '../models/transport_service_model.dart';
 import '../models/payment_mode_model.dart';
 import '../models/vessel_schedule_model.dart';
 import '../models/customer_model.dart';
+import '../models/booking_model.dart';
+import '../models/location_model.dart';
 import '../services/api_service.dart';
 import '../widgets/success_dialog.dart';
 import '../widgets/error_dialog.dart';
+import '../widgets/confirm_dialog.dart';
 
 class BookingPage extends StatefulWidget {
-  const BookingPage({super.key});
+  final Booking? bookingToEdit; // Optional booking for editing
+
+  const BookingPage({super.key, this.bookingToEdit});
 
   @override
   State<BookingPage> createState() => _BookingPageState();
@@ -74,6 +79,141 @@ class _BookingPageState extends State<BookingPage> {
     super.initState();
     _loadTransportServices();
     _loadPaymentModes();
+
+    // Pre-fill data if editing (async)
+    if (widget.bookingToEdit != null) {
+      // Call async method without await in initState
+      Future.microtask(() => _prefillBookingData());
+    }
+  }
+
+  Future<void> _prefillBookingData() async {
+    final booking = widget.bookingToEdit!;
+
+    // Pre-fill text controllers first
+    _weightController.text = booking.weight ?? '';
+    _declaredValueController.text = booking.declaredValue ?? '';
+    _cargoDescController.text = booking.cargoDescription ?? '';
+    _sealController.text = booking.seal ?? '';
+    _truckerController.text = booking.trucker ?? '';
+    _plateController.text = booking.plateNumber ?? '';
+    _driverController.text = booking.driver ?? '';
+
+    setState(() {
+      // Set origin and destination with IDs from booking
+      selectedOrigin = booking.origin;
+      selectedOriginId = booking.originLocationId;
+
+      selectedDestination = booking.destination;
+      selectedDestinationId = booking.destinationLocationId;
+
+      // Set vessel with ID
+      selectedVessel = booking.vesselName ?? "Search Selection";
+      selectedVesselId = booking.vesselId;
+
+      // Set equipment with ID
+      selectedEquipment = booking.equipmentType ?? "Search Selection";
+      selectedEquipmentId = booking.equipmentId;
+
+      // Set commodity with ID
+      selectedCommodity = booking.commodityName ?? "Search Selection";
+      selectedCommodityId = booking.commodityId;
+
+      // Set container with ID
+      selectedContainer = booking.containerNumber ?? "Search Selection";
+      selectedContainerId = booking.containerId;
+
+      // Set payment mode with ID
+      selectedPayment = booking.modeOfPayment;
+      selectedPaymentId = booking.paymentModeId;
+
+      // Set vessel schedule with ID
+      selectedVesselScheduleId = booking.vesselScheduleId;
+      if (booking.vesselScheduleId != null) {
+        selectedVesselSchedule = 'Schedule ${booking.vesselScheduleId}';
+      }
+
+      // Set parties with IDs
+      selectedAgreementParty = booking.agreementParty ?? "Search Selection";
+      selectedAgreementPartyId = booking.agreementPartyId;
+
+      selectedShipper = booking.shipperParty ?? "Search Selection";
+      selectedShipperId = booking.shipperPartyId;
+
+      selectedConsignee = booking.consigneeParty ?? "Search Selection";
+      selectedConsigneeId = booking.consigneePartyId;
+    });
+
+    // Load location types for mode of service auto-fill
+    try {
+      final locations = await _apiService.getLocations();
+
+      if (locations.isEmpty) {
+        print('Warning: No locations loaded');
+        return;
+      }
+
+      Location? originLocation;
+      Location? destinationLocation;
+
+      try {
+        originLocation = locations.firstWhere(
+          (loc) => loc.locationId == booking.originLocationId,
+        );
+      } catch (e) {
+        print('Origin location not found, using first location');
+        originLocation = locations.first;
+      }
+
+      try {
+        destinationLocation = locations.firstWhere(
+          (loc) => loc.locationId == booking.destinationLocationId,
+        );
+      } catch (e) {
+        print('Destination location not found, using first location');
+        destinationLocation = locations.first;
+      }
+
+      setState(() {
+        selectedOriginType = originLocation?.locationTypeDesc;
+        selectedDestinationType = destinationLocation?.locationTypeDesc;
+      });
+
+      // Auto-update Mode of Service based on origin and destination types
+      _updateModeOfService();
+
+      // Load vessel schedule object if we have the ID
+      if (booking.vesselScheduleId != null &&
+          booking.originLocationId != null &&
+          booking.destinationLocationId != null &&
+          booking.vesselId != null) {
+        final schedules = await _apiService.getVesselSchedules(
+          originLocationId: booking.originLocationId!,
+          destinationLocationId: booking.destinationLocationId!,
+          vesselId: booking.vesselId!,
+        );
+
+        if (schedules.isNotEmpty) {
+          VesselSchedule? matchingSchedule;
+          try {
+            matchingSchedule = schedules.firstWhere(
+              (s) => s.vesselScheduleId == booking.vesselScheduleId,
+            );
+          } catch (e) {
+            print('Vessel schedule not found, using first schedule');
+            matchingSchedule = schedules.first;
+          }
+
+          setState(() {
+            selectedVesselScheduleObj = matchingSchedule;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error prefilling booking data: $e');
+      // Don't show error to user, just log it
+      // The form will still be usable with the basic data that was set
+    }
   }
 
   Future<void> _loadTransportServices() async {
@@ -254,9 +394,11 @@ class _BookingPageState extends State<BookingPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Page title
-                    const Text(
-                      'New Booking',
-                      style: TextStyle(
+                    Text(
+                      widget.bookingToEdit != null
+                          ? 'Edit Booking'
+                          : 'New Booking',
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF212121),
@@ -265,7 +407,9 @@ class _BookingPageState extends State<BookingPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Fill in the details to create a new booking transaction',
+                      widget.bookingToEdit != null
+                          ? 'Update the booking details below'
+                          : 'Fill in the details to create a new booking transaction',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[500],
@@ -1079,10 +1223,6 @@ class _BookingPageState extends State<BookingPage> {
                             'CommodityId': selectedCommodityId,
                             'VesselId': selectedVesselId,
                             'VesselScheduleId': selectedVesselScheduleId,
-                            'TargetDepartureDate':
-                                _departureDateController.text.isNotEmpty
-                                ? '${_departureDateController.text}T00:00:00'
-                                : null,
                             'DeclaredValue':
                                 _declaredValueController.text.isNotEmpty
                                 ? double.tryParse(_declaredValueController.text)
@@ -1121,6 +1261,74 @@ class _BookingPageState extends State<BookingPage> {
                             'ConsigneePartyId': selectedConsigneeId,
                           };
 
+                          // Determine if we're creating or updating
+                          final isEditing = widget.bookingToEdit != null;
+
+                          // If editing, show confirmation dialog first
+                          if (isEditing) {
+                            final confirmed =
+                                await ConfirmDialog.showUpdateBooking(
+                                  context,
+                                  bookingNumber:
+                                      widget.bookingToEdit!.referenceNumber,
+                                );
+
+                            if (!confirmed) {
+                              return; // User cancelled
+                            }
+
+                            // User confirmed, proceed with update
+                            try {
+                              // Show loading
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Updating booking...'),
+                                ),
+                              );
+
+                              // UPDATE existing booking
+                              print(
+                                'Updating booking ${widget.bookingToEdit!.id} with data: $bookingData',
+                              );
+                              final result = await _apiService
+                                  .updateBookingWithIds(
+                                    widget.bookingToEdit!.id,
+                                    bookingData,
+                                  );
+                              print('Booking updated successfully: $result');
+
+                              // Hide loading snackbar
+                              ScaffoldMessenger.of(
+                                context,
+                              ).hideCurrentSnackBar();
+
+                              // Show success dialog and wait for user to click OK
+                              await showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => SuccessDialog(
+                                  title: 'UPDATE BOOKING',
+                                  message:
+                                      'Booking Number: ${result['bookingNo'] ?? widget.bookingToEdit!.referenceNumber} was successfully updated.',
+                                  bookingNumber: null,
+                                ),
+                              );
+
+                              // Navigate back to history page AFTER user clicks OK
+                              Navigator.of(context).pop();
+                            } catch (e) {
+                              // Error
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to update booking: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                            return; // Exit early after handling update
+                          }
+
+                          // CREATE new booking (no confirmation needed)
                           try {
                             // Show loading
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1129,7 +1337,6 @@ class _BookingPageState extends State<BookingPage> {
                               ),
                             );
 
-                            // Call API with IDs
                             print('Creating booking with data: $bookingData');
                             final result = await _apiService
                                 .createBookingWithIds(bookingData);
@@ -1146,7 +1353,7 @@ class _BookingPageState extends State<BookingPage> {
                               bookingNumber: result['bookingNo'] ?? 'N/A',
                             );
 
-                            // Clear form instead of navigating back
+                            // Clear form
                             setState(() {
                               selectedOrigin = "Select Origin";
                               selectedDestination = "Select Destination";
@@ -1190,14 +1397,16 @@ class _BookingPageState extends State<BookingPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.check_circle_rounded, size: 22),
-                            SizedBox(width: 10),
+                            const Icon(Icons.check_circle_rounded, size: 22),
+                            const SizedBox(width: 10),
                             Text(
-                              'SUBMIT BOOKING',
-                              style: TextStyle(
+                              widget.bookingToEdit != null
+                                  ? 'UPDATE BOOKING'
+                                  : 'SUBMIT BOOKING',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,

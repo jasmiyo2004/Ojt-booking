@@ -23,6 +23,7 @@ namespace BookingApi.Data
         public DbSet<Equipment> Equipment { get; set; }
         public DbSet<Commodity> Commodities { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<CustomerInformation> CustomerInformations { get; set; }
         public DbSet<Container> Containers { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserInformation> UserInformations { get; set; }
@@ -45,6 +46,7 @@ namespace BookingApi.Data
             modelBuilder.Entity<Equipment>().ToTable("Equipment");
             modelBuilder.Entity<Commodity>().ToTable("Commodity");
             modelBuilder.Entity<Customer>().ToTable("Customer");
+            modelBuilder.Entity<CustomerInformation>().ToTable("CustomerInformation");
             modelBuilder.Entity<Container>().ToTable("Container");
             modelBuilder.Entity<User>().ToTable("User");
             modelBuilder.Entity<UserInformation>().ToTable("UserInformation");
@@ -76,6 +78,12 @@ namespace BookingApi.Data
                 .HasOne(l => l.LocationType)
                 .WithMany(lt => lt.Locations)
                 .HasForeignKey(l => l.LocationTypeId);
+
+            // Configure Customer -> CustomerInformation relationship
+            modelBuilder.Entity<Customer>()
+                .HasOne(c => c.CustomerInformation)
+                .WithOne(ci => ci.Customer)
+                .HasForeignKey<CustomerInformation>(ci => ci.CustomerId);
         }
     }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import '../controllers/booking_controller.dart';
 import '../services/api_service.dart';
+import 'booking_page.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -354,7 +355,18 @@ class _HistoryPageState extends State<HistoryPage> {
                 icon: Icons.edit_rounded,
                 label: 'Edit',
                 color: const Color(0xFFFF9800),
-                onTap: () => _showEditModal(context, booking),
+                onTap: () {
+                  // Navigate to booking page with pre-filled data for editing
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookingPage(bookingToEdit: booking),
+                    ),
+                  ).then((_) {
+                    // Reload bookings when returning from edit page
+                    _loadBookings();
+                  });
+                },
               ),
               const SizedBox(width: 8),
               _buildActionButton(
@@ -590,9 +602,128 @@ class _HistoryPageState extends State<HistoryPage> {
                             "Vessel Name",
                             booking.vesselName ?? "N/A",
                           ),
-                          _buildReadOnlyField(
-                            "Vessel Schedule",
-                            "ETD: ${booking.getFormattedDate()}",
+                          // Vessel Schedule Details
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Vessel Schedule",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "POL",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                          Text(
+                                            booking.vesselSchedulePol ?? "N/A",
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "POD",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                          Text(
+                                            booking.vesselSchedulePod ?? "N/A",
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "ETD",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                          Text(
+                                            booking.vesselScheduleEtd != null
+                                                ? DateTime.parse(
+                                                    booking.vesselScheduleEtd!,
+                                                  ).toString().substring(0, 19)
+                                                : "N/A",
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "ETA",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[500],
+                                            ),
+                                          ),
+                                          Text(
+                                            booking.vesselScheduleEta != null
+                                                ? DateTime.parse(
+                                                    booking.vesselScheduleEta!,
+                                                  ).toString().substring(0, 19)
+                                                : "N/A",
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
