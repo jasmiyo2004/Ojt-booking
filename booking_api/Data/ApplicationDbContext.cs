@@ -11,6 +11,7 @@ namespace BookingApi.Data
         }
 
         public DbSet<Booking> Bookings { get; set; }
+        public DbSet<BookingParty> BookingParties { get; set; }
         public DbSet<Status> Statuses { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<LocationType> LocationTypes { get; set; }
@@ -32,6 +33,7 @@ namespace BookingApi.Data
         {
             // Configure table names to match database
             modelBuilder.Entity<Booking>().ToTable("Booking");
+            modelBuilder.Entity<BookingParty>().ToTable("BookingParty");
             modelBuilder.Entity<Status>().ToTable("Status");
             modelBuilder.Entity<Location>().ToTable("Location");
             modelBuilder.Entity<LocationType>().ToTable("LocationType");

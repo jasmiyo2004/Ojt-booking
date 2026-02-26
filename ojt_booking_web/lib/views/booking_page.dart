@@ -1115,6 +1115,10 @@ class _BookingPageState extends State<BookingPage> {
                             'UpdateDttm': DateTime.now()
                                 .toUtc()
                                 .toIso8601String(),
+                            // Party IDs
+                            'AgreementPartyId': selectedAgreementPartyId,
+                            'ShipperPartyId': selectedShipperId,
+                            'ConsigneePartyId': selectedConsigneeId,
                           };
 
                           try {

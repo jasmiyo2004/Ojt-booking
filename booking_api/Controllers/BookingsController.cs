@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookingApi.Data;
 using BookingApi.Models;
+using System.Linq;
 
 namespace BookingApi.Controllers
 {
@@ -31,6 +32,8 @@ namespace BookingApi.Controllers
                 .Include(b => b.Commodity)
                 .Include(b => b.Vessel)
                 .Include(b => b.Container)
+                .Include(b => b.BookingParties)
+                    .ThenInclude(bp => bp.Customer)
                 .ToListAsync();
         }
 
@@ -49,6 +52,8 @@ namespace BookingApi.Controllers
                 .Include(b => b.Commodity)
                 .Include(b => b.Vessel)
                 .Include(b => b.Container)
+                .Include(b => b.BookingParties)
+                    .ThenInclude(bp => bp.Customer)
                 .FirstOrDefaultAsync(b => b.BookingId == id);
 
             if (booking == null)
@@ -79,22 +84,88 @@ namespace BookingApi.Controllers
 
         // POST: api/Bookings
         [HttpPost]
-        public async Task<ActionResult<Booking>> PostBooking(Booking booking)
+        public async Task<ActionResult<Booking>> PostBooking(CreateBookingRequest request)
         {
-            // Set default values
-            booking.CreateDttm = DateTime.UtcNow;
-            booking.UpdateDttm = DateTime.UtcNow;
-            booking.CreateUserId = "SYSTEM"; // You might want to get this from authentication
-            booking.UpdateUserId = "SYSTEM";
-
-            // Set default status if not provided (assume BOOKED = 4)
-            if (booking.StatusId == null)
+            // Create the booking
+            var booking = new Booking
             {
-                booking.StatusId = 4; // BOOKED status
-            }
+                BookingNo = request.BookingNo,
+                StatusId = request.StatusId ?? 4, // Default to BOOKED
+                TransportServiceId = request.TransportServiceId,
+                OriginLocationId = request.OriginLocationId,
+                DestinationLocationId = request.DestinationLocationId,
+                VesselScheduleId = request.VesselScheduleId,
+                EquipmentId = request.EquipmentId,
+                PaymentModeId = request.PaymentModeId,
+                CommodityId = request.CommodityId,
+                VesselId = request.VesselId,
+                DeclaredValue = request.DeclaredValue,
+                CargoDescription = request.CargoDescription,
+                Weight = request.Weight,
+                ContainerId = request.ContainerId,
+                SealNumber = request.SealNumber,
+                Trucker = request.Trucker,
+                PlateNumber = request.PlateNumber,
+                Driver = request.Driver,
+                CreateDttm = DateTime.UtcNow,
+                UpdateDttm = DateTime.UtcNow,
+                CreateUserId = request.CreateUserId ?? "SYSTEM",
+                UpdateUserId = request.UpdateUserId ?? "SYSTEM"
+            };
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
+
+            // Create BookingParty records for the 3 parties
+            var bookingParties = new List<BookingParty>();
+
+            if (request.AgreementPartyId.HasValue)
+            {
+                bookingParties.Add(new BookingParty
+                {
+                    BookingId = booking.BookingId,
+                    PartyTypeId = 10, // Agreement Party
+                    CustomerId = request.AgreementPartyId.Value,
+                    CreateUserId = "SYSTEM",
+                    CreateDttm = DateTime.UtcNow,
+                    UpdateUserId = "SYSTEM",
+                    UpdateDttm = DateTime.UtcNow
+                });
+            }
+
+            if (request.ShipperPartyId.HasValue)
+            {
+                bookingParties.Add(new BookingParty
+                {
+                    BookingId = booking.BookingId,
+                    PartyTypeId = 11, // Shipper Party
+                    CustomerId = request.ShipperPartyId.Value,
+                    CreateUserId = "SYSTEM",
+                    CreateDttm = DateTime.UtcNow,
+                    UpdateUserId = "SYSTEM",
+                    UpdateDttm = DateTime.UtcNow
+                });
+            }
+
+            if (request.ConsigneePartyId.HasValue)
+            {
+                bookingParties.Add(new BookingParty
+                {
+                    BookingId = booking.BookingId,
+                    PartyTypeId = 12, // Consignee Party
+                    CustomerId = request.ConsigneePartyId.Value,
+                    CreateUserId = "SYSTEM",
+                    CreateDttm = DateTime.UtcNow,
+                    UpdateUserId = "SYSTEM",
+                    UpdateDttm = DateTime.UtcNow
+                });
+            }
+
+            if (bookingParties.Any())
+            {
+                _context.BookingParties.AddRange(bookingParties);
+                await _context.SaveChangesAsync();
+            }
 
             return CreatedAtAction("GetBooking", new { id = booking.BookingId }, booking);
         }

@@ -67,6 +67,34 @@ class Booking {
 
   // Convert JSON from API to Booking object
   factory Booking.fromJson(Map<String, dynamic> json) {
+    // Extract party information from bookingParties array
+    String? agreementParty;
+    String? shipperParty;
+    String? consigneeParty;
+
+    if (json['bookingParties'] != null) {
+      final parties = json['bookingParties'] as List;
+      for (var party in parties) {
+        final partyTypeId = party['partyTypeId'];
+        final customer = party['customer'];
+        if (customer != null) {
+          final customerName =
+              '${customer['firstName'] ?? ''} ${customer['middleName'] ?? ''} ${customer['lastName'] ?? ''}'
+                  .trim();
+          final customerCode = customer['customerCd'] ?? '';
+          final fullDisplay = '$customerName ($customerCode)';
+
+          if (partyTypeId == 10) {
+            agreementParty = fullDisplay;
+          } else if (partyTypeId == 11) {
+            shipperParty = fullDisplay;
+          } else if (partyTypeId == 12) {
+            consigneeParty = fullDisplay;
+          }
+        }
+      }
+    }
+
     return Booking(
       id: json['bookingId']?.toString() ?? '0',
       referenceNumber: json['bookingNo'] ?? 'N/A',
@@ -81,9 +109,9 @@ class Booking {
           ? DateTime.parse(json['vesselSchedule']['etd'])
           : DateTime.now(),
       status: json['status']?['statusDesc'] ?? 'PENDING',
-      agreementParty: 'N/A', // Not stored in current database schema
-      shipperParty: 'N/A', // Not stored in current database schema
-      consigneeParty: 'N/A', // Not stored in current database schema
+      agreementParty: agreementParty,
+      shipperParty: shipperParty,
+      consigneeParty: consigneeParty,
       modeOfService: 'N/A', // TransportService not included yet
       modeOfPayment: json['paymentMode']?['paymentModeDesc'],
       commodityName: json['commodity']?['commodityDesc'],

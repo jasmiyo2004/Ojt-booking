@@ -1,12 +1,8 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace BookingApi.Models
 {
-    public class Booking
+    public class CreateBookingRequest
     {
-        [Key]
-        public short BookingId { get; set; }
+        // Booking fields
         public string? BookingNo { get; set; }
         public short? StatusId { get; set; }
         public short? TransportServiceId { get; set; }
@@ -32,34 +28,9 @@ namespace BookingApi.Models
         public string? UpdateUserId { get; set; }
         public DateTime? UpdateDttm { get; set; }
 
-        [ForeignKey("StatusId")]
-        public Status? Status { get; set; }
-
-        [ForeignKey("OriginLocationId")]
-        public Location? OriginLocation { get; set; }
-
-        [ForeignKey("DestinationLocationId")]
-        public Location? DestinationLocation { get; set; }
-
-        [ForeignKey("VesselScheduleId")]
-        public VesselSchedule? VesselSchedule { get; set; }
-
-        [ForeignKey("EquipmentId")]
-        public Equipment? Equipment { get; set; }
-
-        [ForeignKey("PaymentModeId")]
-        public PaymentMode? PaymentMode { get; set; }
-
-        [ForeignKey("CommodityId")]
-        public Commodity? Commodity { get; set; }
-
-        [ForeignKey("VesselId")]
-        public Vessel? Vessel { get; set; }
-
-        [ForeignKey("ContainerId")]
-        public Container? Container { get; set; }
-
-        // Navigation property for booking parties
-        public ICollection<BookingParty>? BookingParties { get; set; }
+        // Party IDs
+        public int? AgreementPartyId { get; set; }  // CustomerId for Agreement Party (PartyTypeId = 10)
+        public int? ShipperPartyId { get; set; }     // CustomerId for Shipper Party (PartyTypeId = 11)
+        public int? ConsigneePartyId { get; set; }   // CustomerId for Consignee Party (PartyTypeId = 12)
     }
 }
