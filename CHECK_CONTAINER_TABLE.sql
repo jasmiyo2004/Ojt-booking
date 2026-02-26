@@ -1,0 +1,9 @@
+-- Check the actual structure of the Container table
+SELECT 
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE,
+    CHARACTER_MAXIMUM_LENGTH
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'Container'
+ORDER BY ORDINAL_POSITION;
