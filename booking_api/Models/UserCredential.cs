@@ -7,9 +7,9 @@ namespace BookingApi.Models
     public class UserCredential
     {
         [Key]
-        public int UserCredentialId { get; set; }
+        public short UserCredentialId { get; set; }  // smallint in database
         
-        public int? UserId { get; set; }
+        public short? UserId { get; set; }  // smallint in database
         public string? Password { get; set; }
         
         // Audit Fields

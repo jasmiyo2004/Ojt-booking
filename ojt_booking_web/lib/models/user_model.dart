@@ -50,7 +50,7 @@ class User {
       middleName: json['middleName'],
       lastName: json['lastName'],
       email: json['email'],
-      number: json['number'],
+      number: json['number']?.toString(), // Convert number (bigint) to string
       userCode: json['userCode'],
       statusId: json['statusId'],
       statusDesc: json['statusDesc'],

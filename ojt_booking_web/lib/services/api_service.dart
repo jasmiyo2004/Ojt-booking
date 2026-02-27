@@ -1144,14 +1144,23 @@ class ApiService {
   Future<List<dynamic>> getUsers() async {
     const url = '$baseUrl/users';
     try {
+      print('API Service: Fetching users from $url');
+
       final response = await http
           .get(Uri.parse(url), headers: {'Content-Type': 'application/json'})
           .timeout(const Duration(seconds: 10));
 
+      print('API Service: getUsers response status: ${response.statusCode}');
+      print('API Service: getUsers response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
+        print('API Service: Loaded ${data.length} users from API');
         return data;
       } else {
+        print(
+          'API Service: Failed to load users - Status ${response.statusCode}',
+        );
         throw Exception('Failed to load users: ${response.statusCode}');
       }
     } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'user_management_page.dart';
+import 'landing_page.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
 
@@ -839,14 +840,27 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           ElevatedButton(
             onPressed: () {
+              // Close the dialog
               Navigator.pop(context);
-              // TODO: Implement actual logout logic
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Logged out successfully!'),
-                  backgroundColor: Colors.green,
-                ),
+
+              // Navigate back to landing page and remove all previous routes
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LandingPage()),
+                (route) => false, // Remove all previous routes
               );
+
+              // Show success message on the landing page
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Logged out successfully!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              });
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

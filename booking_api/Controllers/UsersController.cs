@@ -54,7 +54,7 @@ namespace BookingApi.Controllers
 
         // GET: api/users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetUser(int id)
+        public async Task<ActionResult<object>> GetUser(short id)
         {
             var user = await _context.Users
                 .Include(u => u.UserInformation)
@@ -108,7 +108,7 @@ namespace BookingApi.Controllers
                     MiddleName = request.MiddleName,
                     LastName = request.LastName,
                     Email = request.Email,
-                    Number = request.Number,
+                    Number = request.Number,  // Store as string
                     UserCode = request.UserCode,
                     StatusId = request.StatusId,
                     CreateUserId = request.CreateUserId ?? "SYSTEM",
@@ -138,7 +138,7 @@ namespace BookingApi.Controllers
                 // 3. Create UserCredential
                 var credential = new UserCredential
                 {
-                    UserId = user.UserId,
+                    UserId = user.UserId,  // int to int? is fine, SQL will handle int to smallint conversion
                     Password = request.Password, // TODO: Hash password in production
                     CreateUserId = request.CreateUserId ?? "SYSTEM",
                     CreateDttm = DateTime.Now,
@@ -151,9 +151,12 @@ namespace BookingApi.Controllers
 
                 await transaction.CommitAsync();
 
-                // Return created user with all details
-                var createdUser = await GetUser(user.UserId);
-                return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, createdUser.Value);
+                // Return success with the created user ID
+                return Ok(new { 
+                    message = "User created successfully",
+                    userId = user.UserId,
+                    userInformationId = userInfo.UserInformationId
+                });
             }
             catch (Exception ex)
             {
@@ -168,7 +171,7 @@ namespace BookingApi.Controllers
 
         // PUT: api/users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+        public async Task<IActionResult> UpdateUser(short id, [FromBody] UpdateUserRequest request)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             
@@ -190,7 +193,7 @@ namespace BookingApi.Controllers
                     user.UserInformation.MiddleName = request.MiddleName ?? user.UserInformation.MiddleName;
                     user.UserInformation.LastName = request.LastName ?? user.UserInformation.LastName;
                     user.UserInformation.Email = request.Email ?? user.UserInformation.Email;
-                    user.UserInformation.Number = request.Number ?? user.UserInformation.Number;
+                    user.UserInformation.Number = request.Number ?? user.UserInformation.Number;  // Store as string
                     user.UserInformation.UserCode = request.UserCode ?? user.UserInformation.UserCode;
                     user.UserInformation.StatusId = request.StatusId ?? user.UserInformation.StatusId;
                     user.UserInformation.UpdateUserId = request.UpdateUserId ?? "SYSTEM";
@@ -236,7 +239,7 @@ namespace BookingApi.Controllers
 
         // DELETE: api/users/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(short id)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             
@@ -291,7 +294,7 @@ namespace BookingApi.Controllers
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? Email { get; set; }
-        public string? Number { get; set; }
+        public string? Number { get; set; }  // Accept as string, convert to int
         public short? StatusId { get; set; }
         public short? UserTypeId { get; set; }
         public string? UserCode { get; set; }
@@ -306,9 +309,9 @@ namespace BookingApi.Controllers
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? Email { get; set; }
-        public string? Number { get; set; }
+        public string? Number { get; set; }  // Accept as string, convert to int
         public short? StatusId { get; set; }
-        public short? UserTypeId { get; set; }
+        public short? UserTypeId { get; set; }  // Must match UserType.UserTypeId which is short
         public string? UserCode { get; set; }
         public string? Password { get; set; }
         public string? Remarks { get; set; }

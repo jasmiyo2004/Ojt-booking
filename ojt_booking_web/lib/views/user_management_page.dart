@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
+import '../widgets/success_dialog.dart';
 
 class UserManagementPage extends StatefulWidget {
   const UserManagementPage({super.key});
@@ -159,13 +160,62 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       ],
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: _filteredUsers.length,
-                    itemBuilder: (context, index) {
-                      final user = _filteredUsers[index];
-                      return _buildUserCard(user);
-                    },
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        // Table Header
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8),
+                            ),
+                          ),
+                          child: Table(
+                            columnWidths: const {
+                              0: FlexColumnWidth(2.5), // Action
+                              1: FlexColumnWidth(2.5), // Full Name
+                              2: FlexColumnWidth(2.5), // Email
+                              3: FlexColumnWidth(1.5), // User Code
+                            },
+                            children: [
+                              TableRow(
+                                children: [
+                                  _buildTableHeader('Action'),
+                                  _buildTableHeader('Full Name'),
+                                  _buildTableHeader('Email'),
+                                  _buildTableHeader('User Code'),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Table Body
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(8),
+                              bottomRight: Radius.circular(8),
+                            ),
+                          ),
+                          child: Table(
+                            columnWidths: const {
+                              0: FlexColumnWidth(2.5),
+                              1: FlexColumnWidth(2.5),
+                              2: FlexColumnWidth(2.5),
+                              3: FlexColumnWidth(1.5),
+                            },
+                            children: _filteredUsers
+                                .map((user) => _buildUserRow(user))
+                                .toList(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
           ),
         ],
@@ -179,6 +229,98 @@ class _UserManagementPageState extends State<UserManagementPage> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
+    );
+  }
+
+  Widget _buildTableHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  TableRow _buildUserRow(User user) {
+    final isActive = user.statusDesc == 'Active';
+
+    return TableRow(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+      ),
+      children: [
+        // Action Column
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextButton.icon(
+                onPressed: () => _showViewUserDialog(user),
+                icon: const Icon(Icons.visibility, size: 16),
+                label: const Text('View'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                ),
+              ),
+              const Text(' | ', style: TextStyle(color: Colors.grey)),
+              TextButton.icon(
+                onPressed: () => _showEditUserDialog(user),
+                icon: const Icon(Icons.edit, size: 16),
+                label: const Text('Edit'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFD4AF37),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                ),
+              ),
+              const Text(' | ', style: TextStyle(color: Colors.grey)),
+              Text(
+                isActive ? 'Active' : 'Inactive',
+                style: TextStyle(
+                  color: isActive ? Colors.green : Colors.red,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Full Name Column
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            user.fullName,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+        ),
+        // Email Column
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            user.email ?? 'N/A',
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+        ),
+        // User Code Column
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            user.userCode ?? 'N/A',
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+        ),
+      ],
     );
   }
 
@@ -619,22 +761,26 @@ class _UserManagementPageState extends State<UserManagementPage> {
     showDialog(
       context: context,
       builder: (context) => UserFormDialog(
-        userTypes: _userTypes,
         onSave: (userData) async {
+          // Store the parent context before the dialog closes
+          final parentContext = this.context;
+
           try {
             await _apiService.createUser(userData);
-            _loadData();
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('User created successfully!'),
-                  backgroundColor: Colors.green,
-                ),
+            await _loadData();
+
+            // Use the parent context to show success dialog
+            if (mounted && parentContext.mounted) {
+              SuccessDialog.show(
+                parentContext,
+                title: 'USER CREATED',
+                message: 'New user is successfully created!',
               );
             }
           } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+            // Use the parent context to show error
+            if (mounted && parentContext.mounted) {
+              ScaffoldMessenger.of(parentContext).showSnackBar(
                 SnackBar(
                   content: Text('Error creating user: $e'),
                   backgroundColor: Colors.red,
@@ -652,7 +798,6 @@ class _UserManagementPageState extends State<UserManagementPage> {
       context: context,
       builder: (context) => UserFormDialog(
         user: user,
-        userTypes: _userTypes,
         onSave: (userData) async {
           try {
             await _apiService.updateUser(user.userId, userData);
@@ -742,13 +887,13 @@ class _UserManagementPageState extends State<UserManagementPage> {
 // User Form Dialog for Add/Edit
 class UserFormDialog extends StatefulWidget {
   final User? user;
-  final List<dynamic> userTypes;
+  final List<dynamic>? userTypes; // Made optional since we're hardcoding
   final Function(Map<String, dynamic>) onSave;
 
   const UserFormDialog({
     super.key,
     this.user,
-    required this.userTypes,
+    this.userTypes, // No longer required
     required this.onSave,
   });
 
@@ -766,6 +911,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
   late TextEditingController _userCodeController;
   late TextEditingController _passwordController;
   int? _selectedUserTypeId;
+  int _selectedStatusId = 1; // 1 = Active, 2 = Inactive
   bool _obscurePassword = true;
 
   @override
@@ -781,6 +927,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
     _userCodeController = TextEditingController(text: widget.user?.userCode);
     _passwordController = TextEditingController();
     _selectedUserTypeId = widget.user?.userIdType;
+    _selectedStatusId = widget.user?.statusId ?? 1; // Default to Active
   }
 
   @override
@@ -928,7 +1075,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         keyboardType: TextInputType.phone,
                       ),
 
-                      // 6. Status (disabled, automatically Active)
+                      // 6. Status (editable only in edit mode)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -940,30 +1087,75 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  size: 20,
-                                  color: Colors.grey[600],
+                          if (isEdit)
+                            // Editable dropdown for edit mode
+                            DropdownButtonFormField<int>(
+                              value: _selectedStatusId,
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(
+                                  _selectedStatusId == 1
+                                      ? Icons.check_circle
+                                      : Icons.block,
+                                  color: _selectedStatusId == 1
+                                      ? Colors.green
+                                      : Colors.red,
                                 ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Active',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black54,
-                                  ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 1,
+                                  child: Text('Active'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 2,
+                                  child: Text('Inactive'),
                                 ),
                               ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedStatusId = value ?? 1;
+                                });
+                              },
+                              validator: (value) {
+                                if (value == null) {
+                                  return 'Please select a status';
+                                }
+                                return null;
+                              },
+                            )
+                          else
+                            // Disabled field showing Active for add mode
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    size: 20,
+                                    color: Colors.green[600],
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Active',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -987,7 +1179,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                       ),
                       const SizedBox(height: 16),
 
-                      // 7. User Type (dropdown)
+                      // 7. User Type (dropdown) - Hardcoded Admin and Local
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1014,12 +1206,16 @@ class _UserFormDialogState extends State<UserFormDialog> {
                                   size: 20,
                                 ),
                               ),
-                              items: widget.userTypes.map((type) {
-                                return DropdownMenuItem<int>(
-                                  value: type['userTypeId'],
-                                  child: Text(type['userTypeDesc'] ?? ''),
-                                );
-                              }).toList(),
+                              items: const [
+                                DropdownMenuItem<int>(
+                                  value: 1,
+                                  child: Text('Admin'),
+                                ),
+                                DropdownMenuItem<int>(
+                                  value: 2,
+                                  child: Text('Local'),
+                                ),
+                              ],
                               onChanged: (value) =>
                                   setState(() => _selectedUserTypeId = value),
                               validator: (value) => value == null
@@ -1185,10 +1381,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
             : _middleNameController.text,
         'lastName': _lastNameController.text,
         'email': _emailController.text,
-        'number': _numberController.text,
+        'number': _numberController.text, // Send as string
         'userCode': _userCodeController.text,
-        'statusId':
-            1, // Active status - StatusId 1 should be Active in Status table
+        'statusId': _selectedStatusId, // Use selected status from dropdown
         'userTypeId': _selectedUserTypeId,
         'createUserId': 'SYSTEM',
       };

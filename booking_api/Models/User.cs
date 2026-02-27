@@ -7,10 +7,12 @@ namespace BookingApi.Models
     public class User
     {
         [Key]
-        public int UserId { get; set; }
+        public short UserId { get; set; }  // smallint in database
         
-        public short? UserIdType { get; set; }
-        public int? UserInformationId { get; set; }
+        [Column("UserTypeId")]
+        public short? UserIdType { get; set; }  // smallint in database
+        
+        public short? UserInformationId { get; set; }  // smallint in database
         public string? Remarks { get; set; }
         
         // Audit Fields
