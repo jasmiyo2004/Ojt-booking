@@ -49,6 +49,10 @@ class Booking {
   final String? plateNumber;
   final String? driver;
 
+  // Timestamps
+  final DateTime? cancelDttm;
+  final String? cancelRemarks;
+
   // Customer Info
   final String? customerName;
   final String? contactNumber;
@@ -93,6 +97,8 @@ class Booking {
     this.trucker,
     this.plateNumber,
     this.driver,
+    this.cancelDttm,
+    this.cancelRemarks,
     this.customerName,
     this.contactNumber,
   });
@@ -217,6 +223,10 @@ class Booking {
       trucker: json['trucker'],
       plateNumber: json['plateNumber'],
       driver: json['driver'],
+      cancelDttm: json['cancelDttm'] != null
+          ? DateTime.parse(json['cancelDttm'])
+          : null,
+      cancelRemarks: json['bkCancelRemarks'],
       customerName: null, // Not stored in current database schema
       contactNumber: null, // Not stored in current database schema
     );

@@ -118,4 +118,20 @@ class SuccessDialog extends StatelessWidget {
       ),
     );
   }
+
+  /// Show success dialog for booking cancellation
+  static void showCancelSuccess(
+    BuildContext context, {
+    required String bookingNumber,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => SuccessDialog(
+        title: 'CANCELLED BOOKING',
+        message: 'Booking Number: $bookingNumber was successfully cancelled.',
+        bookingNumber: null, // Don't show the "Booking number is..." text
+      ),
+    );
+  }
 }

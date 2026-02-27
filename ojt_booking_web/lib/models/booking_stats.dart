@@ -1,13 +1,13 @@
 class BookingStats {
   final int totalBookings;
-  final int booked;
-  final int completed;
+  final int bookedToday;
+  final int numberOfUsers;
   final int cancelled;
 
   BookingStats({
     required this.totalBookings,
-    required this.booked,
-    required this.completed,
+    required this.bookedToday,
+    required this.numberOfUsers,
     required this.cancelled,
   });
 
@@ -15,9 +15,10 @@ class BookingStats {
   factory BookingStats.fromJson(Map<String, dynamic> json) {
     return BookingStats(
       totalBookings: json['totalBookings'] ?? 0,
-      booked: json['booked'] ?? 0,
-      completed: json['completed'] ?? 0,
-      cancelled: json['canceled'] ?? json['cancelled'] ?? 0, // Handle both spellings
+      bookedToday: json['bookedToday'] ?? 0,
+      numberOfUsers: json['numberOfUsers'] ?? 0,
+      cancelled:
+          json['canceled'] ?? json['cancelled'] ?? 0, // Handle both spellings
     );
   }
 
@@ -25,8 +26,8 @@ class BookingStats {
   Map<String, dynamic> toJson() {
     return {
       'totalBookings': totalBookings,
-      'booked': booked,
-      'completed': completed,
+      'bookedToday': bookedToday,
+      'numberOfUsers': numberOfUsers,
       'cancelled': cancelled,
     };
   }

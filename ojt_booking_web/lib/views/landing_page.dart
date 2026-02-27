@@ -78,7 +78,7 @@ class LandingPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Seamless Logistics Solutions',
+            'Fast, Simple and Seamlessly Reliable Transport Solutions',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 18,

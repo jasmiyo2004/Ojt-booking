@@ -17,6 +17,12 @@ namespace BookingApi.Controllers
             _context = context;
         }
 
+        // Helper method to get Philippine time (UTC+8)
+        private DateTime GetPhilippineTime()
+        {
+            return DateTime.UtcNow.AddHours(8);
+        }
+
         // GET: api/Bookings
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookingDto>>> GetBookings()
@@ -125,7 +131,9 @@ namespace BookingApi.Controllers
                     PlateNumber = b.PlateNumber,
                     Driver = b.Driver,
                     CreateDttm = b.CreateDttm,
-                    UpdateDttm = b.UpdateDttm
+                    UpdateDttm = b.UpdateDttm,
+                    CancelDttm = b.CancelDttm,
+                    BKCancelRemarks = b.BKCancelRemarks
                 }).ToList();
 
                 return Ok(bookingDtos);
@@ -204,24 +212,277 @@ namespace BookingApi.Controllers
         [HttpGet("stats")]
         public async Task<ActionResult<object>> GetBookingStats()
         {
-            var totalBookings = await _context.Bookings.CountAsync();
-            var booked = await _context.Bookings.CountAsync(b => b.StatusId == 4); // BOOK status
-            var completed = await _context.Bookings.CountAsync(b => b.StatusId == 3); // CONF status
-            var canceled = await _context.Bookings.CountAsync(b => b.StatusId == 5); // CANCEL status
+            // Get Philippine timezone (UTC+8)
+            var philippineTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time"); // UTC+8
+            var nowUtc = DateTime.UtcNow;
+            var nowPhilippine = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, philippineTimeZone);
+            
+            // Get start and end of today in Philippine time
+            var todayStartPhilippine = nowPhilippine.Date; // 12:00 AM today
+            var todayEndPhilippine = todayStartPhilippine.AddDays(1).AddTicks(-1); // 11:59:59 PM today
+            
+            // Convert back to UTC for database query
+            var todayStartUtc = TimeZoneInfo.ConvertTimeToUtc(todayStartPhilippine, philippineTimeZone);
+            var todayEndUtc = TimeZoneInfo.ConvertTimeToUtc(todayEndPhilippine, philippineTimeZone);
+
+            // Total Bookings with StatusId = 4 (BOOKED)
+            var totalBookings = await _context.Bookings.CountAsync(b => b.StatusId == 4);
+            
+            // Booked Today - bookings created today in Philippine time with StatusId = 4
+            var bookedToday = await _context.Bookings.CountAsync(b => 
+                b.StatusId == 4 && 
+                b.CreateDttm >= todayStartUtc && 
+                b.CreateDttm <= todayEndUtc
+            );
+            
+            // Number of Users with StatusId = 1 in UserInformation table
+            var numberOfUsers = await _context.UserInformations.CountAsync(ui => ui.StatusId == 1);
+            
+            // Canceled - bookings with StatusId = 5 (CANCELED)
+            var canceled = await _context.Bookings.CountAsync(b => b.StatusId == 5);
 
             return new
             {
                 totalBookings,
-                booked,
-                completed,
+                bookedToday,
+                numberOfUsers,
                 canceled
             };
+        }
+
+        // GET: api/Bookings/recent
+        [HttpGet("recent")]
+        public async Task<ActionResult<IEnumerable<BookingDto>>> GetRecentBookings()
+        {
+            try
+            {
+                // Get top 5 most recent bookings sorted by CreateDttm descending
+                var bookings = await _context.Bookings
+                    .Include(b => b.Status)
+                    .Include(b => b.OriginLocation)
+                    .Include(b => b.DestinationLocation)
+                    .Include(b => b.VesselSchedule)
+                        .ThenInclude(vs => vs.Vessel)
+                    .Include(b => b.VesselSchedule)
+                        .ThenInclude(vs => vs.OriginPort)
+                    .Include(b => b.VesselSchedule)
+                        .ThenInclude(vs => vs.DestinationPort)
+                    .Include(b => b.Equipment)
+                    .Include(b => b.PaymentMode)
+                    .Include(b => b.Commodity)
+                    .Include(b => b.Vessel)
+                    .Include(b => b.Container)
+                    .Include(b => b.BookingParties)
+                        .ThenInclude(bp => bp.Customer)
+                    .OrderByDescending(b => b.CreateDttm)
+                    .ThenByDescending(b => b.BookingId)
+                    .Take(5)
+                    .ToListAsync();
+
+                // Load CustomerInformation separately
+                var customerIds = bookings
+                    .SelectMany(b => b.BookingParties)
+                    .Where(bp => bp.CustomerId.HasValue)
+                    .Select(bp => bp.CustomerId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                var customerInfos = new Dictionary<short, CustomerInformation>();
+                if (customerIds.Any())
+                {
+                    var infos = await _context.CustomerInformations
+                        .Where(ci => ci.CustomerId.HasValue && customerIds.Contains(ci.CustomerId.Value))
+                        .ToListAsync();
+                    
+                    foreach (var info in infos)
+                    {
+                        if (info.CustomerId.HasValue)
+                        {
+                            customerInfos[info.CustomerId.Value] = info;
+                        }
+                    }
+                }
+
+                // Map to DTOs
+                var bookingDtos = bookings.Select(b => new BookingDto
+                {
+                    BookingId = b.BookingId,
+                    BookingNo = b.BookingNo,
+                    StatusId = b.StatusId,
+                    StatusDesc = b.Status?.StatusDesc,
+                    OriginLocationId = b.OriginLocationId,
+                    OriginLocationDesc = b.OriginLocation?.LocationDesc,
+                    DestinationLocationId = b.DestinationLocationId,
+                    DestinationLocationDesc = b.DestinationLocation?.LocationDesc,
+                    VesselId = b.VesselId,
+                    VesselDesc = b.Vessel?.VesselDesc ?? b.VesselSchedule?.Vessel?.VesselDesc,
+                    VesselSchedule = b.VesselSchedule == null ? null : new VesselScheduleDto
+                    {
+                        VesselScheduleId = b.VesselSchedule.VesselScheduleId,
+                        VesselDesc = b.VesselSchedule.Vessel?.VesselDesc,
+                        OriginPortDesc = b.VesselSchedule.OriginPort?.PortDesc,
+                        DestinationPortDesc = b.VesselSchedule.DestinationPort?.PortDesc,
+                        Etd = b.VesselSchedule.ETD,
+                        Eta = b.VesselSchedule.ETA
+                    },
+                    EquipmentId = b.EquipmentId,
+                    EquipmentDesc = b.Equipment?.EquipmentDesc,
+                    CommodityId = b.CommodityId,
+                    CommodityDesc = b.Commodity?.CommodityDesc,
+                    Weight = b.Weight,
+                    DeclaredValue = b.DeclaredValue,
+                    CargoDescription = b.CargoDescription,
+                    ContainerId = b.ContainerId,
+                    ContainerNo = b.Container?.ContainerNo,
+                    SealNumber = b.SealNumber,
+                    BookingParties = b.BookingParties.Select(bp => new BookingPartyDto
+                    {
+                        BookingPartyId = bp.BookingPartyId,
+                        PartyTypeId = bp.PartyTypeId,
+                        Customer = bp.Customer == null ? null : new CustomerDto
+                        {
+                            CustomerId = bp.Customer.CustomerId,
+                            CustomerCd = bp.Customer.CustomerCd,
+                            FirstName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
+                                ? customerInfos[bp.CustomerId.Value].FirstName 
+                                : null,
+                            MiddleName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
+                                ? customerInfos[bp.CustomerId.Value].MiddleName 
+                                : null,
+                            LastName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
+                                ? customerInfos[bp.CustomerId.Value].LastName 
+                                : null
+                        }
+                    }).ToList(),
+                    PaymentModeId = b.PaymentModeId,
+                    PaymentModeDesc = b.PaymentMode?.PaymentModeDesc,
+                    Trucker = b.Trucker,
+                    PlateNumber = b.PlateNumber,
+                    Driver = b.Driver,
+                    CreateDttm = b.CreateDttm,
+                    UpdateDttm = b.UpdateDttm,
+                    CancelDttm = b.CancelDttm,
+                    BKCancelRemarks = b.BKCancelRemarks
+                }).ToList();
+
+                return Ok(bookingDtos);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message, innerError = ex.InnerException?.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
+        // GET: api/Bookings/routes
+        [HttpGet("routes")]
+        public async Task<ActionResult<object>> GetRouteStatistics(
+            [FromQuery] string? period = "month",
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
+        {
+            try
+            {
+                // Get Philippine timezone (UTC+8)
+                var philippineTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time");
+                var nowUtc = DateTime.UtcNow;
+                var nowPhilippine = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, philippineTimeZone);
+
+                DateTime filterStartUtc, filterEndUtc;
+
+                // Determine date range based on period or custom dates
+                if (startDate.HasValue && endDate.HasValue)
+                {
+                    // Custom date range
+                    filterStartUtc = startDate.Value.ToUniversalTime();
+                    filterEndUtc = endDate.Value.Date.AddDays(1).AddTicks(-1).ToUniversalTime();
+                }
+                else
+                {
+                    // Predefined periods
+                    switch (period?.ToLower())
+                    {
+                        case "day":
+                            var todayStart = nowPhilippine.Date;
+                            var todayEnd = todayStart.AddDays(1).AddTicks(-1);
+                            filterStartUtc = TimeZoneInfo.ConvertTimeToUtc(todayStart, philippineTimeZone);
+                            filterEndUtc = TimeZoneInfo.ConvertTimeToUtc(todayEnd, philippineTimeZone);
+                            break;
+                        case "week":
+                            var weekStart = nowPhilippine.Date.AddDays(-(int)nowPhilippine.DayOfWeek);
+                            var weekEnd = weekStart.AddDays(7).AddTicks(-1);
+                            filterStartUtc = TimeZoneInfo.ConvertTimeToUtc(weekStart, philippineTimeZone);
+                            filterEndUtc = TimeZoneInfo.ConvertTimeToUtc(weekEnd, philippineTimeZone);
+                            break;
+                        case "month":
+                        default:
+                            var monthStart = new DateTime(nowPhilippine.Year, nowPhilippine.Month, 1);
+                            var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+                            filterStartUtc = TimeZoneInfo.ConvertTimeToUtc(monthStart, philippineTimeZone);
+                            filterEndUtc = TimeZoneInfo.ConvertTimeToUtc(monthEnd, philippineTimeZone);
+                            break;
+                    }
+                }
+
+                // Get bookings within date range with StatusId = 4 (BOOKED)
+                var bookings = await _context.Bookings
+                    .Include(b => b.OriginLocation)
+                    .Include(b => b.DestinationLocation)
+                    .Where(b => b.StatusId == 4 && 
+                                b.CreateDttm >= filterStartUtc && 
+                                b.CreateDttm <= filterEndUtc)
+                    .ToListAsync();
+
+                // Group by route and count
+                var routeStats = bookings
+                    .GroupBy(b => new
+                    {
+                        Origin = b.OriginLocation?.LocationDesc ?? "Unknown",
+                        Destination = b.DestinationLocation?.LocationDesc ?? "Unknown"
+                    })
+                    .Select(g => new
+                    {
+                        route = $"{g.Key.Origin} → {g.Key.Destination}",
+                        origin = g.Key.Origin,
+                        destination = g.Key.Destination,
+                        count = g.Count()
+                    })
+                    .OrderByDescending(r => r.count)
+                    .Take(10) // Top 10 routes
+                    .ToList();
+
+                var totalBookings = bookings.Count;
+
+                // Calculate percentages
+                var routeStatsWithPercentage = routeStats.Select(r => new
+                {
+                    r.route,
+                    r.origin,
+                    r.destination,
+                    r.count,
+                    percentage = totalBookings > 0 ? Math.Round((double)r.count / totalBookings * 100, 1) : 0
+                }).ToList();
+
+                return Ok(new
+                {
+                    period,
+                    startDate = filterStartUtc,
+                    endDate = filterEndUtc,
+                    totalBookings,
+                    routes = routeStatsWithPercentage
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = ex.Message, innerError = ex.InnerException?.Message });
+            }
         }
 
         // POST: api/Bookings
         [HttpPost]
         public async Task<ActionResult<Booking>> PostBooking(CreateBookingRequest request)
         {
+            var philippineTime = GetPhilippineTime();
+            
             // Create the booking
             var booking = new Booking
             {
@@ -243,8 +504,8 @@ namespace BookingApi.Controllers
                 Trucker = request.Trucker,
                 PlateNumber = request.PlateNumber,
                 Driver = request.Driver,
-                CreateDttm = DateTime.UtcNow,
-                UpdateDttm = DateTime.UtcNow,
+                CreateDttm = philippineTime,
+                UpdateDttm = philippineTime,
                 CreateUserId = request.CreateUserId ?? "SYSTEM",
                 UpdateUserId = request.UpdateUserId ?? "SYSTEM"
             };
@@ -263,9 +524,9 @@ namespace BookingApi.Controllers
                     PartyTypeId = 10, // Agreement Party
                     CustomerId = request.AgreementPartyId.Value,
                     CreateUserId = "SYSTEM",
-                    CreateDttm = DateTime.UtcNow,
+                    CreateDttm = philippineTime,
                     UpdateUserId = "SYSTEM",
-                    UpdateDttm = DateTime.UtcNow
+                    UpdateDttm = philippineTime
                 });
             }
 
@@ -277,9 +538,9 @@ namespace BookingApi.Controllers
                     PartyTypeId = 11, // Shipper Party
                     CustomerId = request.ShipperPartyId.Value,
                     CreateUserId = "SYSTEM",
-                    CreateDttm = DateTime.UtcNow,
+                    CreateDttm = philippineTime,
                     UpdateUserId = "SYSTEM",
-                    UpdateDttm = DateTime.UtcNow
+                    UpdateDttm = philippineTime
                 });
             }
 
@@ -291,9 +552,9 @@ namespace BookingApi.Controllers
                     PartyTypeId = 12, // Consignee Party
                     CustomerId = request.ConsigneePartyId.Value,
                     CreateUserId = "SYSTEM",
-                    CreateDttm = DateTime.UtcNow,
+                    CreateDttm = philippineTime,
                     UpdateUserId = "SYSTEM",
-                    UpdateDttm = DateTime.UtcNow
+                    UpdateDttm = philippineTime
                 });
             }
 
@@ -316,6 +577,8 @@ namespace BookingApi.Controllers
             
             if (booking == null) return NotFound();
 
+            var philippineTime = GetPhilippineTime();
+
             // Update booking fields
             booking.BookingNo = request.BookingNo ?? booking.BookingNo;
             booking.StatusId = request.StatusId ?? booking.StatusId;
@@ -336,7 +599,7 @@ namespace BookingApi.Controllers
             booking.PlateNumber = request.PlateNumber ?? booking.PlateNumber;
             booking.Driver = request.Driver ?? booking.Driver;
             booking.UpdateUserId = request.UpdateUserId ?? "SYSTEM";
-            booking.UpdateDttm = DateTime.UtcNow;
+            booking.UpdateDttm = philippineTime;
 
             // Update booking parties if provided
             if (request.AgreementPartyId.HasValue || request.ShipperPartyId.HasValue || request.ConsigneePartyId.HasValue)
@@ -479,7 +742,9 @@ namespace BookingApi.Controllers
                 PlateNumber = refreshed.PlateNumber,
                 Driver = refreshed.Driver,
                 CreateDttm = refreshed.CreateDttm,
-                UpdateDttm = refreshed.UpdateDttm
+                UpdateDttm = refreshed.UpdateDttm,
+                CancelDttm = refreshed.CancelDttm,
+                BKCancelRemarks = refreshed.BKCancelRemarks
             };
 
             return Ok(bookingDto);
@@ -492,6 +757,8 @@ namespace BookingApi.Controllers
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
 
+            var philippineTime = GetPhilippineTime();
+
             // Try to map to a "cancelled" status if such exists
             var cancelStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.StatusDesc!.ToUpper().Contains("CANCEL"));
             if (cancelStatus != null)
@@ -499,7 +766,9 @@ namespace BookingApi.Controllers
                 booking.StatusId = cancelStatus.StatusId;
             }
 
-            booking.UpdateDttm = DateTime.UtcNow;
+            booking.BKCancelRemarks = req?.Remarks;
+            booking.CancelDttm = philippineTime;
+            booking.UpdateDttm = philippineTime;
             booking.UpdateUserId = req?.UserId ?? "SYSTEM";
 
             _context.Bookings.Update(booking);

@@ -11,6 +11,7 @@ import '../models/commodity_model.dart';
 import '../models/customer_model.dart';
 import '../models/container_model.dart';
 import '../models/vessel_schedule_model.dart';
+import '../models/route_stats_model.dart';
 
 class ApiService {
   // TODO: Replace with your actual C# API URL when ready
@@ -55,11 +56,41 @@ class ApiService {
   }
 
   /// Get recent bookings (last 5)
-  /// Later: GET /api/bookings/recent
+  /// GET /api/bookings/recent
   Future<List<Booking>> getRecentBookings() async {
-    // Get all bookings and return first 5 (no artificial delay)
-    final allBookings = await getBookings();
-    return allBookings.take(5).toList();
+    try {
+      print(
+        'API Service: Fetching recent bookings from $baseUrl/bookings/recent',
+      );
+      final response = await http
+          .get(Uri.parse('$baseUrl/bookings/recent'))
+          .timeout(const Duration(seconds: 10));
+
+      print(
+        'API Service: Recent bookings response status: ${response.statusCode}',
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        lastBookingsSource = 'api';
+        print(
+          'API Service: Successfully loaded ${data.length} recent bookings from API',
+        );
+        return data.map((json) => Booking.fromJson(json)).toList();
+      } else {
+        throw Exception(
+          'Failed to load recent bookings: ${response.statusCode}',
+        );
+      }
+    } catch (e, st) {
+      // Fallback to mock data if API fails
+      print(
+        'API call failed (getRecentBookings), falling back to mock data. Error: $e',
+      );
+      print(st);
+      lastBookingsSource = 'mock';
+      return getMockBookings().take(5).toList();
+    }
   }
 
   /// Get booking by ID
@@ -215,16 +246,13 @@ class ApiService {
 
   /// Cancel booking
   /// Later: DELETE /api/bookings/{id} or PATCH /api/bookings/{id}/cancel
-  Future<bool> cancelBooking(String id) async {
+  Future<bool> cancelBooking(String id, {String? remarks}) async {
     try {
       final response = await http
           .post(
             Uri.parse('$baseUrl/bookings/$id/cancel'),
             headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              'UserId': 'SYSTEM',
-              'Remarks': 'Cancelled from app',
-            }),
+            body: json.encode({'UserId': 'SYSTEM', 'Remarks': remarks ?? ''}),
           )
           .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) return true;
@@ -314,7 +342,7 @@ class ApiService {
         lastStatsSource = 'api';
         final stats = BookingStats.fromJson(data);
         print(
-          'API Service: Successfully parsed stats: ${stats.totalBookings} total, ${stats.booked} booked, ${stats.completed} completed, ${stats.cancelled} cancelled',
+          'API Service: Successfully parsed stats: ${stats.totalBookings} total, ${stats.bookedToday} booked today, ${stats.numberOfUsers} users, ${stats.cancelled} cancelled',
         );
         return stats;
       } else {
@@ -334,6 +362,43 @@ class ApiService {
       }
       lastStatsSource = 'mock';
       return getMockStats();
+    }
+  }
+
+  /// Get route statistics with date filtering
+  /// GET /api/bookings/routes
+  Future<RouteStatsResponse> getRouteStatistics({
+    String period = 'month',
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      var url = '$baseUrl/bookings/routes?period=$period';
+
+      if (startDate != null && endDate != null) {
+        final startStr = startDate.toIso8601String();
+        final endStr = endDate.toIso8601String();
+        url = '$baseUrl/bookings/routes?startDate=$startStr&endDate=$endStr';
+      }
+
+      print('API Service: Fetching route statistics from $url');
+      final response = await http
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 10));
+
+      print('API Service: Route stats response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return RouteStatsResponse.fromJson(data);
+      } else {
+        throw Exception(
+          'Failed to load route statistics: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('API call failed (getRouteStatistics): $e');
+      rethrow;
     }
   }
 
@@ -409,9 +474,9 @@ class ApiService {
   BookingStats getMockStats() {
     return BookingStats(
       totalBookings: 150,
-      booked: 15,
-      completed: 120,
-      cancelled: 15,
+      bookedToday: 15,
+      numberOfUsers: 25,
+      cancelled: 10,
     );
   }
 

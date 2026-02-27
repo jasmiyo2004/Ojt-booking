@@ -27,6 +27,9 @@ namespace BookingApi.Models
         public string? PlateNumber { get; set; }
         public string? Driver { get; set; }
         
+        public string? BKCancelRemarks { get; set; }
+        public DateTime? CancelDttm { get; set; }
+        
         public string? CreateUserId { get; set; }
         public DateTime? CreateDttm { get; set; }
         public string? UpdateUserId { get; set; }

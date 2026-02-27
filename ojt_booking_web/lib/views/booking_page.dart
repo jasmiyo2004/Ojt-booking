@@ -1328,8 +1328,17 @@ class _BookingPageState extends State<BookingPage> {
                             return; // Exit early after handling update
                           }
 
-                          // CREATE new booking (no confirmation needed)
+                          // CREATE new booking (show confirmation first)
                           try {
+                            // Show confirmation dialog first
+                            final confirmed =
+                                await ConfirmDialog.showSubmitBooking(context);
+
+                            if (!confirmed) {
+                              return; // User cancelled
+                            }
+
+                            // User confirmed, proceed with creation
                             // Show loading
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(

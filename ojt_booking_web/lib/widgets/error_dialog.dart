@@ -92,4 +92,15 @@ class ErrorDialog {
       message: 'Please input missing data.',
     );
   }
+
+  static void showCancelError(
+    BuildContext context, {
+    required String bookingNumber,
+  }) {
+    show(
+      context: context,
+      title: 'CANCEL ERROR',
+      message: 'Booking Number: $bookingNumber is already cancelled.',
+    );
+  }
 }

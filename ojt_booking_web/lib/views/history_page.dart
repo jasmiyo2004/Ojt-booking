@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import '../controllers/booking_controller.dart';
 import '../services/api_service.dart';
+import '../widgets/confirm_dialog.dart';
+import '../widgets/remarks_dialog.dart';
+import '../widgets/success_dialog.dart';
+import '../widgets/error_dialog.dart';
 import 'booking_page.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -18,11 +22,65 @@ class _HistoryPageState extends State<HistoryPage> {
   List<Booking> _bookings = [];
   bool _loading = true;
 
+  // Pagination variables
+  int _currentPage = 1;
+  final int _itemsPerPage = 5;
+
+  // Scroll controller for pagination
+  final ScrollController _scrollController = ScrollController();
+
   List<Booking> get filteredBookings {
-    if (_selectedFilter == 'All') return _bookings;
-    return _bookings
-        .where((b) => b.status.toUpperCase() == _selectedFilter.toUpperCase())
-        .toList();
+    List<Booking> filtered;
+
+    if (_selectedFilter == 'All') {
+      filtered = _bookings;
+    } else {
+      filtered = _bookings
+          .where((b) => b.status.toUpperCase() == _selectedFilter.toUpperCase())
+          .toList();
+    }
+
+    // Special sorting for Cancelled filter
+    if (_selectedFilter.toUpperCase() == 'CANCELLED') {
+      filtered.sort((a, b) {
+        // If both have cancelDttm, sort by most recent first
+        if (a.cancelDttm != null && b.cancelDttm != null) {
+          return b.cancelDttm!.compareTo(a.cancelDttm!);
+        }
+        // If only a has cancelDttm, a comes first
+        if (a.cancelDttm != null && b.cancelDttm == null) {
+          return -1;
+        }
+        // If only b has cancelDttm, b comes first
+        if (a.cancelDttm == null && b.cancelDttm != null) {
+          return 1;
+        }
+        // If both are null, maintain original order
+        return 0;
+      });
+    }
+
+    return filtered;
+  }
+
+  List<Booking> get paginatedBookings {
+    final filtered = filteredBookings;
+    final startIndex = (_currentPage - 1) * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+
+    if (startIndex >= filtered.length) {
+      return [];
+    }
+
+    return filtered.sublist(
+      startIndex,
+      endIndex > filtered.length ? filtered.length : endIndex,
+    );
+  }
+
+  int get totalPages {
+    final filtered = filteredBookings;
+    return (filtered.length / _itemsPerPage).ceil();
   }
 
   @override
@@ -31,8 +89,17 @@ class _HistoryPageState extends State<HistoryPage> {
     _loadBookings();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadBookings() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _currentPage = 1; // Reset to first page when reloading
+    });
 
     try {
       final list = await _api.getBookings();
@@ -50,6 +117,34 @@ class _HistoryPageState extends State<HistoryPage> {
           _loading = false;
         });
       }
+    }
+  }
+
+  void _goToNextPage() {
+    if (_currentPage < totalPages) {
+      setState(() {
+        _currentPage++;
+      });
+      // Scroll to top of the list
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _goToPreviousPage() {
+    if (_currentPage > 1) {
+      setState(() {
+        _currentPage--;
+      });
+      // Scroll to top of the list
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
   }
 
@@ -171,17 +266,14 @@ class _HistoryPageState extends State<HistoryPage> {
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children:
-                                ['All', 'Booked', 'Completed', 'Cancelled']
-                                    .map(
-                                      (filter) => Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 8,
-                                        ),
-                                        child: _buildFilterChip(filter),
-                                      ),
-                                    )
-                                    .toList(),
+                            children: ['All', 'Booked', 'Cancelled']
+                                .map(
+                                  (filter) => Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: _buildFilterChip(filter),
+                                  ),
+                                )
+                                .toList(),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -195,20 +287,136 @@ class _HistoryPageState extends State<HistoryPage> {
                         ? Center(child: CircularProgressIndicator())
                         : (filteredBookings.isEmpty
                               ? _buildEmptyState()
-                              : ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    24,
-                                    0,
-                                    24,
-                                    24,
-                                  ),
-                                  itemCount: filteredBookings.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(height: 12),
-                                  itemBuilder: (context, index) {
-                                    final booking = filteredBookings[index];
-                                    return _buildBookingCard(booking);
-                                  },
+                              : Column(
+                                  children: [
+                                    Expanded(
+                                      child: ListView.separated(
+                                        controller: _scrollController,
+                                        padding: const EdgeInsets.fromLTRB(
+                                          24,
+                                          0,
+                                          24,
+                                          12,
+                                        ),
+                                        itemCount: paginatedBookings.length,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(height: 12),
+                                        itemBuilder: (context, index) {
+                                          final booking =
+                                              paginatedBookings[index];
+                                          return _buildBookingCard(booking);
+                                        },
+                                      ),
+                                    ),
+                                    // Pagination controls
+                                    if (totalPages > 1)
+                                      Container(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          24,
+                                          12,
+                                          24,
+                                          24,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            // Previous button
+                                            SizedBox(
+                                              width: 100,
+                                              height: 40,
+                                              child: ElevatedButton(
+                                                onPressed: _currentPage > 1
+                                                    ? _goToPreviousPage
+                                                    : null,
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      _currentPage > 1
+                                                      ? const Color(0xFFD4AF37)
+                                                      : Colors.grey[300],
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 2,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                  ),
+                                                  disabledBackgroundColor:
+                                                      Colors.grey[300],
+                                                ),
+                                                child: const Text(
+                                                  'Previous',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Page indicator
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 8,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF5F5F5),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: Colors.grey[300]!,
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                '$_currentPage of $totalPages',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF212121),
+                                                ),
+                                              ),
+                                            ),
+                                            // Next button
+                                            SizedBox(
+                                              width: 100,
+                                              height: 40,
+                                              child: ElevatedButton(
+                                                onPressed:
+                                                    _currentPage < totalPages
+                                                    ? _goToNextPage
+                                                    : null,
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      _currentPage < totalPages
+                                                      ? const Color(0xFFD4AF37)
+                                                      : Colors.grey[300],
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 2,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                  ),
+                                                  disabledBackgroundColor:
+                                                      Colors.grey[300],
+                                                ),
+                                                child: const Text(
+                                                  'Next',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
                                 )),
                   ),
                 ],
@@ -223,7 +431,10 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget _buildFilterChip(String filter) {
     final isSelected = _selectedFilter == filter;
     return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = filter),
+      onTap: () => setState(() {
+        _selectedFilter = filter;
+        _currentPage = 1; // Reset to first page when filter changes
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -351,62 +562,100 @@ class _HistoryPageState extends State<HistoryPage> {
                 onTap: () => _showViewModal(context, booking),
               ),
               const SizedBox(width: 8),
-              _buildActionButton(
-                icon: Icons.edit_rounded,
-                label: 'Edit',
-                color: const Color(0xFFFF9800),
-                onTap: () {
-                  // Navigate to booking page with pre-filled data for editing
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookingPage(bookingToEdit: booking),
-                    ),
-                  ).then((_) {
-                    // Reload bookings when returning from edit page
-                    _loadBookings();
-                  });
-                },
-              ),
+              // Disable Edit button for cancelled bookings
+              if (booking.status.toUpperCase() != 'CANCELLED')
+                _buildActionButton(
+                  icon: Icons.edit_rounded,
+                  label: 'Edit',
+                  color: const Color(0xFFFF9800),
+                  onTap: () {
+                    // Navigate to booking page with pre-filled data for editing
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            BookingPage(bookingToEdit: booking),
+                      ),
+                    ).then((_) {
+                      // Reload bookings when returning from edit page
+                      _loadBookings();
+                    });
+                  },
+                )
+              else
+                _buildActionButton(
+                  icon: Icons.edit_rounded,
+                  label: 'Edit',
+                  color: Colors.grey,
+                  onTap: () {}, // Disabled - no action
+                ),
               const SizedBox(width: 8),
               _buildActionButton(
                 icon: Icons.cancel_rounded,
                 label: 'Cancel',
                 color: const Color(0xFFEF5350),
                 onTap: () async {
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Cancel Booking'),
-                      content: const Text(
-                        'Are you sure you want to cancel this booking?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(ctx, false),
-                          child: const Text('No'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(ctx, true),
-                          child: const Text('Yes'),
-                        ),
-                      ],
-                    ),
+                  // Check if booking is already cancelled
+                  if (booking.status.toUpperCase() == 'CANCELLED') {
+                    ErrorDialog.showCancelError(
+                      context,
+                      bookingNumber: booking.referenceNumber,
+                    );
+                    return;
+                  }
+
+                  // Step 1: Show initial confirmation dialog (Yes/No)
+                  final confirmed = await ConfirmDialog.showCancelBooking(
+                    context,
+                    bookingNumber: booking.referenceNumber,
                   );
-                  if (confirmed == true) {
-                    final ok = await _api.cancelBooking(booking.id);
-                    if (ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Booking cancelled')),
+
+                  if (!confirmed) return;
+
+                  // Step 2: Show remarks input dialog
+                  final remarks = await RemarksDialog.showCancelRemarks(
+                    context,
+                    bookingNumber: booking.referenceNumber,
+                  );
+
+                  if (remarks == null) return; // User clicked Cancel
+
+                  // Step 3: Call API to cancel booking with remarks
+                  try {
+                    final success = await _api.cancelBooking(
+                      booking.id,
+                      remarks: remarks,
+                    );
+
+                    if (success) {
+                      // Step 4: Show success dialog
+                      await showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => SuccessDialog(
+                          title: 'CANCELLED BOOKING',
+                          message:
+                              'Booking Number: ${booking.referenceNumber} was successfully cancelled.',
+                        ),
                       );
+
+                      // Reload bookings after success dialog is dismissed
                       await _loadBookings();
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Failed to cancel booking'),
-                        ),
+                      // Show error dialog
+                      ErrorDialog.show(
+                        context: context,
+                        title: 'CANCEL ERROR',
+                        message: 'Failed to cancel booking. Please try again.',
                       );
                     }
+                  } catch (e) {
+                    // Show error dialog
+                    ErrorDialog.show(
+                      context: context,
+                      title: 'CANCEL ERROR',
+                      message: 'An error occurred: $e',
+                    );
                   }
                 },
               ),
@@ -493,13 +742,13 @@ class _HistoryPageState extends State<HistoryPage> {
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'BOOKED':
-        return const Color(0xFF2196F3);
+        return const Color(0xFF4CAF50); // Green
       case 'COMPLETED':
-        return const Color(0xFF4CAF50);
+        return const Color(0xFF2196F3); // Blue
       case 'CANCELLED':
-        return const Color(0xFFEF5350);
+        return const Color(0xFFEF5350); // Red
       default:
-        return const Color(0xFF2196F3);
+        return const Color(0xFF2196F3); // Blue
     }
   }
 
@@ -582,6 +831,66 @@ class _HistoryPageState extends State<HistoryPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Cancellation Information (if cancelled)
+                      if (booking.status.toUpperCase() == 'CANCELLED') ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFFEF5350,
+                            ).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: const Color(0xFFEF5350),
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.cancel_rounded,
+                                    color: Color(0xFFEF5350),
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Cancelled Booking',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFEF5350),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (booking.cancelRemarks != null &&
+                                  booking.cancelRemarks!.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Cancellation Remark:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF212121),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  booking.cancelRemarks!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                       _buildModalSection(
                         icon: Icons.route_rounded,
                         title: "Route Information",
