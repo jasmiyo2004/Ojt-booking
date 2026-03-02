@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'user_management_page.dart';
 import 'landing_page.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
 import '../models/user_model.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -13,7 +14,8 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   final ApiService _apiService = ApiService();
-  User? _currentUser;
+  final UserSession _userSession = UserSession();
+  Map<String, dynamic>? _currentUserData;
   bool _isLoading = true;
 
   @override
@@ -25,12 +27,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadCurrentUser() async {
     setState(() => _isLoading = true);
     try {
-      // TODO: Replace with actual authentication
-      // For now, fetch the first user as the logged-in user
-      final usersData = await _apiService.getUsers();
-      if (usersData.isNotEmpty) {
+      // Get user data from session
+      final sessionData = _userSession.currentUser;
+
+      if (sessionData != null) {
         setState(() {
-          _currentUser = User.fromJson(usersData[0]);
+          _currentUserData = sessionData;
           _isLoading = false;
         });
       } else {
@@ -250,7 +252,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildProfileCard() {
-    if (_currentUser == null) {
+    if (_currentUserData == null) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -266,6 +268,10 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       );
     }
+
+    final fullName = _currentUserData!['fullName'] ?? 'Unknown User';
+    final userType = _currentUserData!['userType'] ?? 'Unknown';
+    final initials = _userSession.getInitials();
 
     return InkWell(
       onTap: () => _showViewProfileDialog(),
@@ -303,7 +309,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               child: Center(
                 child: Text(
-                  _currentUser!.initials,
+                  initials,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -319,7 +325,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _currentUser!.fullName,
+                    fullName,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -339,7 +345,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          _currentUser!.userType,
+                          userType,
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF1B5E20),
@@ -354,14 +360,12 @@ class _SettingsPageState extends State<SettingsPage> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _currentUser!.isActive
-                              ? Colors.green[300]
-                              : Colors.red[300],
+                          color: Colors.green[300],
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(
-                          _currentUser!.statusText,
-                          style: const TextStyle(
+                        child: const Text(
+                          'Active',
+                          style: TextStyle(
                             fontSize: 12,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -516,7 +520,16 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showViewProfileDialog() {
-    if (_currentUser == null) return;
+    if (_currentUserData == null) return;
+
+    final fullName = _currentUserData!['fullName'] ?? 'Unknown User';
+    final firstName = _currentUserData!['firstName'] ?? '';
+    final middleName = _currentUserData!['middleName'] ?? '';
+    final lastName = _currentUserData!['lastName'] ?? '';
+    final email = _currentUserData!['email'] ?? 'N/A';
+    final userCode = _currentUserData!['userCode'] ?? 'N/A';
+    final userType = _currentUserData!['userType'] ?? 'Unknown';
+    final initials = _userSession.getInitials();
 
     showDialog(
       context: context,
@@ -564,7 +577,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       child: Center(
                         child: Text(
-                          _currentUser!.initials,
+                          initials,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -579,7 +592,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _currentUser!.fullName,
+                            fullName,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
@@ -599,7 +612,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  _currentUser!.userType,
+                                  userType,
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.white,
@@ -614,14 +627,12 @@ class _SettingsPageState extends State<SettingsPage> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _currentUser!.isActive
-                                      ? Colors.green[300]
-                                      : Colors.red[300],
+                                  color: Colors.green[300],
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: Text(
-                                  _currentUser!.statusText,
-                                  style: const TextStyle(
+                                child: const Text(
+                                  'Active',
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
@@ -661,17 +672,17 @@ class _SettingsPageState extends State<SettingsPage> {
                       const SizedBox(height: 16),
                       _buildInfoField(
                         'First Name',
-                        _currentUser!.firstName ?? 'N/A',
+                        firstName.isEmpty ? 'N/A' : firstName,
                         Icons.person_outline,
                       ),
                       _buildInfoField(
                         'Middle Name',
-                        _currentUser!.middleName ?? 'N/A',
+                        middleName.isEmpty ? 'N/A' : middleName,
                         Icons.person_outline,
                       ),
                       _buildInfoField(
                         'Last Name',
-                        _currentUser!.lastName ?? 'N/A',
+                        lastName.isEmpty ? 'N/A' : lastName,
                         Icons.person_outline,
                       ),
                       const SizedBox(height: 24),
@@ -695,16 +706,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _buildInfoField(
-                        'Email',
-                        _currentUser!.email ?? 'N/A',
-                        Icons.email,
-                      ),
-                      _buildInfoField(
-                        'Number',
-                        _currentUser!.number ?? 'N/A',
-                        Icons.phone,
-                      ),
+                      _buildInfoField('Email', email, Icons.email),
                       const SizedBox(height: 24),
 
                       Row(
@@ -722,35 +724,27 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      _buildInfoField(
-                        'User Code',
-                        _currentUser!.userCode ?? 'N/A',
-                        Icons.qr_code,
-                      ),
+                      _buildInfoField('User Code', userCode, Icons.qr_code),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // Edit Button
+              // Close Button
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _showEditProfileDialog();
-                  },
-                  icon: const Icon(Icons.edit),
-                  label: const Text('EDIT PROFILE'),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4AF37),
+                    backgroundColor: const Color(0xFF1B5E20),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  child: const Text('CLOSE'),
                 ),
               ),
             ],
@@ -792,40 +786,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showEditProfileDialog() {
-    if (_currentUser == null) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => _EditProfileDialog(
-        user: _currentUser!,
-        onSave: (updatedData) async {
-          try {
-            await _apiService.updateUser(_currentUser!.userId, updatedData);
-            _loadCurrentUser();
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Profile updated successfully!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error updating profile: $e'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        },
-      ),
-    );
-  }
-
   void _showLogoutDialog() {
     showDialog(
       context: context,
@@ -840,6 +800,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           ElevatedButton(
             onPressed: () {
+              // Clear user session
+              _userSession.clearUser();
+
               // Close the dialog
               Navigator.pop(context);
 

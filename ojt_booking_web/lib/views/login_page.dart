@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'main_screen.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
+import '../widgets/validation_dialog.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,7 +28,28 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
+    // Check if form is valid
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Check if username is empty
+    if (_usernameController.text.trim().isEmpty) {
+      await ValidationDialog.show(
+        context,
+        'Please enter your username, email, or user code.',
+        icon: Icons.person_off_rounded,
+      );
+      return;
+    }
+
+    // Check if password is empty
+    if (_passwordController.text.isEmpty) {
+      await ValidationDialog.show(
+        context,
+        'Please enter your password.',
+        icon: Icons.lock_outline_rounded,
+      );
       return;
     }
 
@@ -42,6 +65,11 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (mounted) {
+        // Store user session
+        if (response['user'] != null) {
+          UserSession().setUser(response['user']);
+        }
+
         // Login successful - navigate to main screen
         Navigator.pushAndRemoveUntil(
           context,
@@ -63,14 +91,24 @@ class _LoginPageState extends State<LoginPage> {
           _isLoading = false;
         });
 
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        // Show error dialog instead of snackbar
+        String errorMessage = e.toString().replaceAll('Exception: ', '');
+
+        // Customize icon based on error type
+        IconData errorIcon = Icons.error_outline_rounded;
+        if (errorMessage.toLowerCase().contains('password')) {
+          errorIcon = Icons.lock_outline_rounded;
+        } else if (errorMessage.toLowerCase().contains('username') ||
+            errorMessage.toLowerCase().contains('user')) {
+          errorIcon = Icons.person_off_rounded;
+        } else if (errorMessage.toLowerCase().contains('inactive')) {
+          errorIcon = Icons.block_rounded;
+        } else if (errorMessage.toLowerCase().contains('authorized') ||
+            errorMessage.toLowerCase().contains('role')) {
+          errorIcon = Icons.admin_panel_settings_outlined;
+        }
+
+        await ValidationDialog.show(context, errorMessage, icon: errorIcon);
       }
     }
   }
@@ -128,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                       _buildLabel('Login As'),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<int>(
-                        value: _selectedRole,
+                        initialValue: _selectedRole,
                         decoration: InputDecoration(
                           prefixIcon: Icon(
                             _selectedRole == 1
