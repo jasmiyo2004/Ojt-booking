@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using BookingApi.Data;
+using BCrypt.Net;
 
 namespace BookingApi.Controllers
 {
@@ -137,8 +138,28 @@ namespace BookingApi.Controllers
                         return Unauthorized(new { message = "User credentials not found" });
                     }
 
-                    // Validate password
-                    if (credential.Password != request.Password)
+                    // Validate password using BCrypt or plain text (for backward compatibility)
+                    bool isPasswordValid = false;
+                    
+                    // Check if password is a BCrypt hash (starts with $2a$, $2b$, or $2y$)
+                    if (credential.Password != null && 
+                        (credential.Password.StartsWith("$2a$") || 
+                         credential.Password.StartsWith("$2b$") || 
+                         credential.Password.StartsWith("$2y$")))
+                    {
+                        // Password is hashed, use BCrypt verification
+                        isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, credential.Password);
+                    }
+                    else
+                    {
+                        // Password is plain text (legacy), do direct comparison
+                        isPasswordValid = credential.Password == request.Password;
+                        
+                        // TODO: Consider auto-upgrading to BCrypt hash on successful login
+                        // This would gradually migrate all passwords to hashed versions
+                    }
+                    
+                    if (!isPasswordValid)
                     {
                         return Unauthorized(new { message = "Invalid username or password" });
                     }

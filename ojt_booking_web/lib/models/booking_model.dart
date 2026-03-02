@@ -52,6 +52,7 @@ class Booking {
   // Timestamps
   final DateTime? cancelDttm;
   final String? cancelRemarks;
+  final DateTime? updateDttm;
 
   // Customer Info
   final String? customerName;
@@ -99,6 +100,7 @@ class Booking {
     this.driver,
     this.cancelDttm,
     this.cancelRemarks,
+    this.updateDttm,
     this.customerName,
     this.contactNumber,
   });
@@ -227,6 +229,9 @@ class Booking {
           ? DateTime.parse(json['cancelDttm'])
           : null,
       cancelRemarks: json['bkCancelRemarks'],
+      updateDttm: json['updateDttm'] != null
+          ? DateTime.parse(json['updateDttm'])
+          : null,
       customerName: null, // Not stored in current database schema
       contactNumber: null, // Not stored in current database schema
     );

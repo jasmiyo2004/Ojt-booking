@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookingApi.Data;
 using BookingApi.Models;
+using BCrypt.Net;
 
 namespace BookingApi.Controllers
 {
@@ -138,8 +139,8 @@ namespace BookingApi.Controllers
                 // 3. Create UserCredential
                 var credential = new UserCredential
                 {
-                    UserId = user.UserId,  // int to int? is fine, SQL will handle int to smallint conversion
-                    Password = request.Password, // TODO: Hash password in production
+                    UserId = user.UserId,
+                    Password = BCrypt.Net.BCrypt.HashPassword(request.Password), // Hash password with BCrypt
                     CreateUserId = request.CreateUserId ?? "SYSTEM",
                     CreateDttm = DateTime.Now,
                     UpdateUserId = request.CreateUserId ?? "SYSTEM",
@@ -214,7 +215,7 @@ namespace BookingApi.Controllers
                     
                     if (credential != null)
                     {
-                        credential.Password = request.Password; // TODO: Hash password in production
+                        credential.Password = BCrypt.Net.BCrypt.HashPassword(request.Password); // Hash password with BCrypt
                         credential.UpdateUserId = request.UpdateUserId ?? "SYSTEM";
                         credential.UpdateDttm = DateTime.Now;
                     }

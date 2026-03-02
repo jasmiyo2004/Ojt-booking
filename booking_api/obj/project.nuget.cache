@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "6LbUZUHMbEo=",
+  "dgSpecHash": "77/yqrjQWyk=",
   "success": true,
   "projectFilePath": "C:\\Users\\OJT\\Desktop\\Gothong_Booking\\booking_api\\BookingApi.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\OJT\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\OJT\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",
+    "C:\\Users\\OJT\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\OJT\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\OJT\\.nuget\\packages\\microsoft.aspnetcore.openapi\\8.0.24\\microsoft.aspnetcore.openapi.8.0.24.nupkg.sha512",
     "C:\\Users\\OJT\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",
