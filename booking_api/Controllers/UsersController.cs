@@ -223,8 +223,37 @@ namespace BookingApi.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                var updatedUser = await GetUser(id);
-                return Ok(updatedUser.Value);
+                // Fetch and return the updated user
+                var updatedUser = await _context.Users
+                    .Include(u => u.UserInformation)
+                        .ThenInclude(ui => ui!.Status)
+                    .Include(u => u.UserType)
+                    .Where(u => u.UserId == id)
+                    .Select(u => new
+                    {
+                        u.UserId,
+                        u.UserIdType,
+                        u.UserInformationId,
+                        UserTypeDesc = u.UserType != null ? u.UserType.UserTypeDesc : null,
+                        UserTypeCd = u.UserType != null ? u.UserType.UserTypeCd : null,
+                        FirstName = u.UserInformation != null ? u.UserInformation.FirstName : null,
+                        MiddleName = u.UserInformation != null ? u.UserInformation.MiddleName : null,
+                        LastName = u.UserInformation != null ? u.UserInformation.LastName : null,
+                        Email = u.UserInformation != null ? u.UserInformation.Email : null,
+                        Number = u.UserInformation != null ? u.UserInformation.Number : null,
+                        UserCode = u.UserInformation != null ? u.UserInformation.UserCode : null,
+                        StatusId = u.UserInformation != null ? u.UserInformation.StatusId : null,
+                        StatusDesc = u.UserInformation != null && u.UserInformation.Status != null 
+                            ? u.UserInformation.Status.StatusDesc : null,
+                        u.Remarks,
+                        u.CreateUserId,
+                        u.CreateDttm,
+                        u.UpdateUserId,
+                        u.UpdateDttm
+                    })
+                    .FirstOrDefaultAsync();
+
+                return Ok(new { message = "User updated successfully", user = updatedUser });
             }
             catch (Exception ex)
             {

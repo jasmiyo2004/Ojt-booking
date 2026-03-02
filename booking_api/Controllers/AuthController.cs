@@ -173,6 +173,7 @@ namespace BookingApi.Controllers
                             middleName = userInfo.MiddleName,
                             lastName = userInfo.LastName,
                             email = userInfo.Email,
+                            number = userInfo.Number,
                             userCode = userInfo.UserCode,
                             fullName = $"{userInfo.FirstName} {userInfo.MiddleName} {userInfo.LastName}".Trim()
                         }

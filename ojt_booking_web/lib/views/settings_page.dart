@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'user_management_page.dart';
 import 'landing_page.dart';
-import '../services/api_service.dart';
 import '../services/user_session.dart';
-import '../models/user_model.dart';
+import '../services/api_service.dart';
+import '../widgets/success_dialog.dart';
+import '../widgets/error_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -13,8 +14,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final ApiService _apiService = ApiService();
   final UserSession _userSession = UserSession();
+  final ApiService _apiService = ApiService();
   Map<String, dynamic>? _currentUserData;
   bool _isLoading = true;
 
@@ -527,6 +528,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final middleName = _currentUserData!['middleName'] ?? '';
     final lastName = _currentUserData!['lastName'] ?? '';
     final email = _currentUserData!['email'] ?? 'N/A';
+    final number = _currentUserData!['number'] ?? 'N/A';
     final userCode = _currentUserData!['userCode'] ?? 'N/A';
     final userType = _currentUserData!['userType'] ?? 'Unknown';
     final initials = _userSession.getInitials();
@@ -707,6 +709,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       const SizedBox(height: 16),
                       _buildInfoField('Email', email, Icons.email),
+                      _buildInfoField('Number', number, Icons.phone),
                       const SizedBox(height: 24),
 
                       Row(
@@ -724,6 +727,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      _buildInfoField(
+                        'User Type',
+                        userType,
+                        Icons.admin_panel_settings,
+                      ),
                       _buildInfoField('User Code', userCode, Icons.qr_code),
                     ],
                   ),
@@ -731,20 +739,24 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 20),
 
-              // Close Button
+              // Edit Profile Button
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showEditProfileDialog();
+                  },
+                  icon: const Icon(Icons.edit),
+                  label: const Text('EDIT PROFILE'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B5E20),
+                    backgroundColor: const Color(0xFFD4AF37),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('CLOSE'),
                 ),
               ),
             ],
@@ -782,6 +794,58 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditProfileDialog() {
+    if (_currentUserData == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => _EditProfileDialog(
+        userData: _currentUserData!,
+        onSave: (updatedData) async {
+          try {
+            final userId = _currentUserData!['userId'];
+            await _apiService.updateUser(userId, updatedData);
+
+            // Update session with new data
+            final updatedUserData = Map<String, dynamic>.from(
+              _currentUserData!,
+            );
+            updatedUserData['firstName'] = updatedData['firstName'];
+            updatedUserData['middleName'] = updatedData['middleName'];
+            updatedUserData['lastName'] = updatedData['lastName'];
+            updatedUserData['email'] = updatedData['email'];
+            updatedUserData['number'] = updatedData['number'];
+            updatedUserData['fullName'] =
+                '${updatedData['firstName']} ${updatedData['middleName'] ?? ''} ${updatedData['lastName']}'
+                    .trim();
+
+            _userSession.setUser(updatedUserData);
+            _loadCurrentUser();
+
+            if (mounted) {
+              showDialog(
+                context: context,
+                builder: (context) => const SuccessDialog(
+                  title: 'Success',
+                  message: 'Profile updated successfully!',
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ErrorDialog.show(
+                context: context,
+                title: 'Error',
+                message:
+                    'Failed to update profile: ${e.toString().replaceAll('Exception: ', '')}',
+              );
+            }
+          }
+        },
       ),
     );
   }
@@ -839,10 +903,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
 // Edit Profile Dialog
 class _EditProfileDialog extends StatefulWidget {
-  final User user;
+  final Map<String, dynamic> userData;
   final Function(Map<String, dynamic>) onSave;
 
-  const _EditProfileDialog({required this.user, required this.onSave});
+  const _EditProfileDialog({required this.userData, required this.onSave});
 
   @override
   State<_EditProfileDialog> createState() => _EditProfileDialogState();
@@ -857,15 +921,26 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   late TextEditingController _numberController;
   late TextEditingController _passwordController;
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: widget.user.firstName);
-    _middleNameController = TextEditingController(text: widget.user.middleName);
-    _lastNameController = TextEditingController(text: widget.user.lastName);
-    _emailController = TextEditingController(text: widget.user.email);
-    _numberController = TextEditingController(text: widget.user.number);
+    _firstNameController = TextEditingController(
+      text: widget.userData['firstName'] ?? '',
+    );
+    _middleNameController = TextEditingController(
+      text: widget.userData['middleName'] ?? '',
+    );
+    _lastNameController = TextEditingController(
+      text: widget.userData['lastName'] ?? '',
+    );
+    _emailController = TextEditingController(
+      text: widget.userData['email'] ?? '',
+    );
+    _numberController = TextEditingController(
+      text: widget.userData['number'] ?? '',
+    );
     _passwordController = TextEditingController();
   }
 
@@ -956,9 +1031,10 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
@@ -971,6 +1047,11 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                               decoration: InputDecoration(
                                 border: InputBorder.none,
                                 prefixIcon: const Icon(Icons.lock, size: 20),
+                                hintText: 'Enter new password',
+                                hintStyle: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 14,
+                                ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscurePassword
@@ -998,23 +1079,36 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Cancel'),
+                      child: const Text('CANCEL'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 2,
                     child: ElevatedButton.icon(
-                      onPressed: _saveProfile,
-                      icon: const Icon(Icons.save),
-                      label: const Text('SAVE CHANGES'),
+                      onPressed: _isLoading ? null : _saveProfile,
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Icon(Icons.save),
+                      label: Text(_isLoading ? 'SAVING...' : 'SAVE CHANGES'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD4AF37),
                         foregroundColor: Colors.white,
@@ -1046,8 +1140,15 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
@@ -1062,7 +1163,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 prefixIcon: Icon(icon, size: 20),
               ),
               validator: required
-                  ? (value) => value == null || value.isEmpty
+                  ? (value) => value == null || value.trim().isEmpty
                         ? 'Please enter $label'
                         : null
                   : null,
@@ -1073,16 +1174,18 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     );
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
       final updatedData = {
-        'firstName': _firstNameController.text,
-        'middleName': _middleNameController.text.isEmpty
+        'firstName': _firstNameController.text.trim(),
+        'middleName': _middleNameController.text.trim().isEmpty
             ? null
-            : _middleNameController.text,
-        'lastName': _lastNameController.text,
-        'email': _emailController.text,
-        'number': _numberController.text,
+            : _middleNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'number': _numberController.text.trim(),
         'updateUserId': 'SYSTEM',
       };
 

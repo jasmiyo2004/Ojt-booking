@@ -17,6 +17,7 @@ class UserSession {
   String? get middleName => _currentUser?['middleName'];
   String? get lastName => _currentUser?['lastName'];
   String? get email => _currentUser?['email'];
+  String? get number => _currentUser?['number'];
   String? get userCode => _currentUser?['userCode'];
   String? get fullName => _currentUser?['fullName'];
 
