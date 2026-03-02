@@ -3,25 +3,49 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookingApi.Models
 {
+    [Table("Booking")]
     public class Booking
     {
         [Key]
+        [Column(TypeName = "smallint")]
         public short BookingId { get; set; }
+        
         public string? BookingNo { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? StatusId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? TransportServiceId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? OriginLocationId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? DestinationLocationId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? VesselScheduleId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? EquipmentId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? PaymentModeId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? CommodityId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? VesselId { get; set; }
         
         public int? DeclaredValue { get; set; }
         public string? CargoDescription { get; set; }
         public int? Weight { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? ContainerId { get; set; }
+        
         public string? SealNumber { get; set; }
         public string? Trucker { get; set; }
         public string? PlateNumber { get; set; }

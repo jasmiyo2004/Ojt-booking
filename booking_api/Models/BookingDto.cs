@@ -2,31 +2,31 @@ namespace BookingApi.Models
 {
     public class BookingDto
     {
-        public short BookingId { get; set; }
+        public int BookingId { get; set; }
         public string? BookingNo { get; set; }
-        public short? StatusId { get; set; }
+        public int? StatusId { get; set; }
         public string? StatusDesc { get; set; }
         
         // Locations with IDs
-        public short? OriginLocationId { get; set; }
+        public int? OriginLocationId { get; set; }
         public string? OriginLocationDesc { get; set; }
-        public short? DestinationLocationId { get; set; }
+        public int? DestinationLocationId { get; set; }
         public string? DestinationLocationDesc { get; set; }
         
         // Vessel & Schedule with IDs
-        public short? VesselId { get; set; }
+        public int? VesselId { get; set; }
         public string? VesselDesc { get; set; }
         public VesselScheduleDto? VesselSchedule { get; set; }
         
         // Cargo with IDs
-        public short? EquipmentId { get; set; }
+        public int? EquipmentId { get; set; }
         public string? EquipmentDesc { get; set; }
-        public short? CommodityId { get; set; }
+        public int? CommodityId { get; set; }
         public string? CommodityDesc { get; set; }
         public int? Weight { get; set; }
         public int? DeclaredValue { get; set; }
         public string? CargoDescription { get; set; }
-        public short? ContainerId { get; set; }
+        public int? ContainerId { get; set; }
         public string? ContainerNo { get; set; }
         public string? SealNumber { get; set; }
         
@@ -34,7 +34,7 @@ namespace BookingApi.Models
         public List<BookingPartyDto>? BookingParties { get; set; }
         
         // Payment & Trucking with IDs
-        public short? PaymentModeId { get; set; }
+        public int? PaymentModeId { get; set; }
         public string? PaymentModeDesc { get; set; }
         public string? Trucker { get; set; }
         public string? PlateNumber { get; set; }
@@ -49,7 +49,7 @@ namespace BookingApi.Models
     
     public class VesselScheduleDto
     {
-        public short VesselScheduleId { get; set; }
+        public int VesselScheduleId { get; set; }
         public string? VesselDesc { get; set; }
         public string? OriginPortDesc { get; set; }
         public string? DestinationPortDesc { get; set; }
@@ -59,14 +59,14 @@ namespace BookingApi.Models
     
     public class BookingPartyDto
     {
-        public short BookingPartyId { get; set; }
-        public short? PartyTypeId { get; set; }
+        public int BookingPartyId { get; set; }
+        public int? PartyTypeId { get; set; }
         public CustomerDto? Customer { get; set; }
     }
     
     public class CustomerDto
     {
-        public short CustomerId { get; set; }
+        public int CustomerId { get; set; }
         public string? CustomerCd { get; set; }
         public string? FirstName { get; set; }
         public string? MiddleName { get; set; }

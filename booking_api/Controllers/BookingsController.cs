@@ -58,7 +58,7 @@ namespace BookingApi.Controllers
                     .Distinct()
                     .ToList();
 
-                var customerInfos = new Dictionary<short, CustomerInformation>();
+                var customerInfos = new Dictionary<int, CustomerInformation>();
                 if (customerIds.Any())
                 {
                     var infos = await _context.CustomerInformations
@@ -69,7 +69,7 @@ namespace BookingApi.Controllers
                     {
                         if (info.CustomerId.HasValue)
                         {
-                            customerInfos[info.CustomerId.Value] = info;
+                            customerInfos[(int)info.CustomerId.Value] = info;
                         }
                     }
                 }
@@ -114,14 +114,14 @@ namespace BookingApi.Controllers
                         {
                             CustomerId = bp.Customer.CustomerId,
                             CustomerCd = bp.Customer.CustomerCd,
-                            FirstName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                                ? customerInfos[bp.CustomerId.Value].FirstName 
+                            FirstName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                                ? customerInfos[(int)bp.CustomerId.Value].FirstName 
                                 : null,
-                            MiddleName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                                ? customerInfos[bp.CustomerId.Value].MiddleName 
+                            MiddleName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                                ? customerInfos[(int)bp.CustomerId.Value].MiddleName 
                                 : null,
-                            LastName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                                ? customerInfos[bp.CustomerId.Value].LastName 
+                            LastName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                                ? customerInfos[(int)bp.CustomerId.Value].LastName 
                                 : null
                         }
                     }).ToList(),
@@ -287,7 +287,7 @@ namespace BookingApi.Controllers
                     .Distinct()
                     .ToList();
 
-                var customerInfos = new Dictionary<short, CustomerInformation>();
+                var customerInfos = new Dictionary<int, CustomerInformation>();
                 if (customerIds.Any())
                 {
                     var infos = await _context.CustomerInformations
@@ -298,7 +298,7 @@ namespace BookingApi.Controllers
                     {
                         if (info.CustomerId.HasValue)
                         {
-                            customerInfos[info.CustomerId.Value] = info;
+                            customerInfos[(int)info.CustomerId.Value] = info;
                         }
                     }
                 }
@@ -343,14 +343,14 @@ namespace BookingApi.Controllers
                         {
                             CustomerId = bp.Customer.CustomerId,
                             CustomerCd = bp.Customer.CustomerCd,
-                            FirstName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                                ? customerInfos[bp.CustomerId.Value].FirstName 
+                            FirstName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                                ? customerInfos[(int)bp.CustomerId.Value].FirstName 
                                 : null,
-                            MiddleName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                                ? customerInfos[bp.CustomerId.Value].MiddleName 
+                            MiddleName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                                ? customerInfos[(int)bp.CustomerId.Value].MiddleName 
                                 : null,
-                            LastName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                                ? customerInfos[bp.CustomerId.Value].LastName 
+                            LastName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                                ? customerInfos[(int)bp.CustomerId.Value].LastName 
                                 : null
                         }
                     }).ToList(),
@@ -669,7 +669,7 @@ namespace BookingApi.Controllers
                 .Distinct()
                 .ToList();
 
-            var customerInfos = new Dictionary<short, CustomerInformation>();
+            var customerInfos = new Dictionary<int, CustomerInformation>();
             if (customerIds.Any())
             {
                 var infos = await _context.CustomerInformations
@@ -680,7 +680,7 @@ namespace BookingApi.Controllers
                 {
                     if (info.CustomerId.HasValue)
                     {
-                        customerInfos[info.CustomerId.Value] = info;
+                        customerInfos[(int)info.CustomerId.Value] = info;
                     }
                 }
             }
@@ -725,14 +725,14 @@ namespace BookingApi.Controllers
                     {
                         CustomerId = bp.Customer.CustomerId,
                         CustomerCd = bp.Customer.CustomerCd,
-                        FirstName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                            ? customerInfos[bp.CustomerId.Value].FirstName 
+                        FirstName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                            ? customerInfos[(int)bp.CustomerId.Value].FirstName 
                             : null,
-                        MiddleName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                            ? customerInfos[bp.CustomerId.Value].MiddleName 
+                        MiddleName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                            ? customerInfos[(int)bp.CustomerId.Value].MiddleName 
                             : null,
-                        LastName = bp.CustomerId.HasValue && customerInfos.ContainsKey(bp.CustomerId.Value) 
-                            ? customerInfos[bp.CustomerId.Value].LastName 
+                        LastName = bp.CustomerId.HasValue && customerInfos.ContainsKey((int)bp.CustomerId.Value) 
+                            ? customerInfos[(int)bp.CustomerId.Value].LastName 
                             : null
                     }
                 }).ToList(),
@@ -763,7 +763,7 @@ namespace BookingApi.Controllers
             var cancelStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.StatusDesc!.ToUpper().Contains("CANCEL"));
             if (cancelStatus != null)
             {
-                booking.StatusId = cancelStatus.StatusId;
+                booking.StatusId = (short?)cancelStatus.StatusId;
             }
 
             booking.BKCancelRemarks = req?.Remarks;

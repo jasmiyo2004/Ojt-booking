@@ -7,14 +7,20 @@ namespace BookingApi.Models
     public class UserInformation
     {
         [Key]
+        [Column(TypeName = "smallint")]
         public short UserInformationId { get; set; }  // smallint in database
         
         public string? FirstName { get; set; }
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? Email { get; set; }
+        
+        [Column(TypeName = "nvarchar(50)")]
         public string? Number { get; set; }  // nvarchar(50) in database
+        
         public string? UserCode { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? StatusId { get; set; }  // smallint in database
         
         // Audit Fields

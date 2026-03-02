@@ -27,6 +27,52 @@ class ApiService {
   String lastBookingsSource = 'unknown';
 
   // ============================================
+  // AUTHENTICATION API
+  // ============================================
+
+  /// Login user
+  /// POST /api/auth/login
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+    required int selectedRole,
+  }) async {
+    const url = '$baseUrl/auth/login';
+    try {
+      print(
+        'API Service: Attempting login for $username as role $selectedRole',
+      );
+
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'username': username,
+              'password': password,
+              'selectedRole': selectedRole,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      print('API Service: Login response status: ${response.statusCode}');
+      print('API Service: Login response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else if (response.statusCode == 401) {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Unauthorized');
+      } else {
+        throw Exception('Login failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('API Service: Login error: $e');
+      rethrow;
+    }
+  }
+
+  // ============================================
   // BOOKINGS API
   // ============================================
 

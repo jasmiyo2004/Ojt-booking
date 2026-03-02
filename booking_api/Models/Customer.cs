@@ -1,8 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace BookingApi.Models
 {
+    [Table("Customer")]
     public class Customer
     {
+        [Key]
+        [Column(TypeName = "smallint")]
         public short CustomerId { get; set; }
+        
         public string CustomerCd { get; set; } = string.Empty;
         
         public string? CreateUserId { get; set; }

@@ -7,7 +7,7 @@ namespace BookingApi.Models
     public class Commodity
     {
         [Key]
-        [Column("CommodityId")]
+        [Column("CommodityId", TypeName = "smallint")]
         public short CommodityId { get; set; }
         
         [Column("CommodityCd")]
@@ -16,9 +16,10 @@ namespace BookingApi.Models
         [Column("CommodityDesc")]
         public string? CommodityDesc { get; set; }
         
-        [Column("CommodityTypeId")]
+        [Column("CommodityTypeId", TypeName = "smallint")]
         public short? CommodityTypeId { get; set; }
         
+        [Column(TypeName = "smallint")]
         public short? StatusId { get; set; }
         public string? CreateUserId { get; set; }
         public DateTime? CreateDttm { get; set; }

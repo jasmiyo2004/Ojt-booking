@@ -7,7 +7,7 @@ namespace BookingApi.Models
     public class Equipment
     {
         [Key]
-        [Column("EquipmentId")]
+        [Column("EquipmentId", TypeName = "smallint")]
         public short EquipmentId { get; set; }
         
         [Column("EquipmentCd")]
@@ -16,7 +16,7 @@ namespace BookingApi.Models
         [Column("EquipmentDesc")]
         public string? EquipmentDesc { get; set; }
         
-        // Add other columns if they exist and are NOT NULL
+        [Column(TypeName = "smallint")]
         public short? StatusId { get; set; }
         public string? CreateUserId { get; set; }
         public DateTime? CreateDttm { get; set; }

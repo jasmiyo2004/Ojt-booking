@@ -7,13 +7,13 @@ namespace BookingApi.Models
     public class TransportService
     {
         [Key]
-        [Column("TransportServiceId")]
+        [Column("TransportServiceId", TypeName = "smallint")]
         public short TransportServiceId { get; set; }
         
         [Column("TransportServiceDesc")]
         public string? TransportServiceDesc { get; set; }
         
-        // Add other columns if they exist and are NOT NULL
+        [Column(TypeName = "smallint")]
         public short? StatusId { get; set; }
         public string? CreateUserId { get; set; }
         public DateTime? CreateDttm { get; set; }

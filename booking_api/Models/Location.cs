@@ -6,12 +6,21 @@ namespace BookingApi.Models
     public class Location
     {
         [Key]
+        [Column(TypeName = "smallint")]
         public short LocationId { get; set; }
+        
         public string? LocationCd { get; set; }
         public string? LocationDesc { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? PortId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? LocationTypeId { get; set; }
+        
+        [Column(TypeName = "smallint")]
         public short? StatusId { get; set; }
+        
         public string? CreateUserId { get; set; }
         public DateTime? CreateDttm { get; set; }
         public string? UpdateUserId { get; set; }

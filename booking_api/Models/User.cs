@@ -7,11 +7,13 @@ namespace BookingApi.Models
     public class User
     {
         [Key]
+        [Column(TypeName = "smallint")]
         public short UserId { get; set; }  // smallint in database
         
-        [Column("UserTypeId")]
+        [Column("UserTypeId", TypeName = "smallint")]
         public short? UserIdType { get; set; }  // smallint in database
         
+        [Column(TypeName = "smallint")]
         public short? UserInformationId { get; set; }  // smallint in database
         public string? Remarks { get; set; }
         

@@ -7,6 +7,7 @@ namespace BookingApi.Models
     public class UserType
     {
         [Key]
+        [Column(TypeName = "smallint")]
         public short UserTypeId { get; set; }
         
         public string? UserTypeCd { get; set; }

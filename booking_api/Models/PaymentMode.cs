@@ -7,13 +7,13 @@ namespace BookingApi.Models
     public class PaymentMode
     {
         [Key]
-        [Column("PaymentModeId")]
+        [Column("PaymentModeId", TypeName = "smallint")]
         public short PaymentModeId { get; set; }
         
         [Column("PaymentModeDesc")]
         public string? PaymentModeDesc { get; set; }
         
-        // Add other columns if they exist and are NOT NULL
+        [Column(TypeName = "smallint")]
         public short? StatusId { get; set; }
         public string? CreateUserId { get; set; }
         public DateTime? CreateDttm { get; set; }
