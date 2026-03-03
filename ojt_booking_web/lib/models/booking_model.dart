@@ -54,6 +54,10 @@ class Booking {
   final String? cancelRemarks;
   final DateTime? updateDttm;
 
+  // User tracking
+  final String? createUserCode;
+  final String? updateUserCode;
+
   // Customer Info
   final String? customerName;
   final String? contactNumber;
@@ -101,6 +105,8 @@ class Booking {
     this.cancelDttm,
     this.cancelRemarks,
     this.updateDttm,
+    this.createUserCode,
+    this.updateUserCode,
     this.customerName,
     this.contactNumber,
   });
@@ -232,6 +238,8 @@ class Booking {
       updateDttm: json['updateDttm'] != null
           ? DateTime.parse(json['updateDttm'])
           : null,
+      createUserCode: json['createUserCode'],
+      updateUserCode: json['updateUserCode'],
       customerName: null, // Not stored in current database schema
       contactNumber: null, // Not stored in current database schema
     );

@@ -45,6 +45,10 @@ namespace BookingApi.Models
         public DateTime? UpdateDttm { get; set; }
         public DateTime? CancelDttm { get; set; }
         public string? BKCancelRemarks { get; set; }
+        
+        // User tracking
+        public string? CreateUserCode { get; set; }
+        public string? UpdateUserCode { get; set; }
     }
     
     public class VesselScheduleDto

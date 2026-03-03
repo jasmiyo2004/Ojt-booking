@@ -23,6 +23,37 @@ namespace BookingApi.Controllers
             return DateTime.UtcNow.AddHours(8);
         }
 
+        // Helper method to get UserCodes from UserIds
+        private async Task<Dictionary<short, string>> GetUserCodesAsync(IEnumerable<string?> userIds)
+        {
+            var parsedUserIds = userIds
+                .Where(uid => uid != null && short.TryParse(uid, out _))
+                .Select(uid => short.Parse(uid!))
+                .Distinct()
+                .ToList();
+
+            var userCodes = new Dictionary<short, string>();
+            if (parsedUserIds.Any())
+            {
+                var users = await _context.Users
+                    .Where(u => parsedUserIds.Contains(u.UserId))
+                    .Join(_context.UserInformations,
+                        u => u.UserInformationId,
+                        ui => ui.UserInformationId,
+                        (u, ui) => new { u.UserId, ui.UserCode })
+                    .ToListAsync();
+                
+                foreach (var user in users)
+                {
+                    if (user.UserCode != null)
+                    {
+                        userCodes[user.UserId] = user.UserCode;
+                    }
+                }
+            }
+            return userCodes;
+        }
+
         // GET: api/Bookings
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookingDto>>> GetBookings()
@@ -50,6 +81,13 @@ namespace BookingApi.Controllers
                     .OrderByDescending(b => b.CreateDttm)
                     .ThenByDescending(b => b.BookingId)
                     .ToListAsync();
+
+                // Load UserCodes for CreateUserId and UpdateUserId
+                var userIds = bookings
+                    .Select(b => b.CreateUserId)
+                    .Concat(bookings.Select(b => b.UpdateUserId))
+                    .ToList();
+                var userCodes = await GetUserCodesAsync(userIds);
 
                 // Load CustomerInformation separately
                 var customerIds = bookings
@@ -134,7 +172,13 @@ namespace BookingApi.Controllers
                     CreateDttm = b.CreateDttm,
                     UpdateDttm = b.UpdateDttm,
                     CancelDttm = b.CancelDttm,
-                    BKCancelRemarks = b.BKCancelRemarks
+                    BKCancelRemarks = b.BKCancelRemarks,
+                    CreateUserCode = b.CreateUserId != null && short.TryParse(b.CreateUserId, out var createUserId) && userCodes.ContainsKey(createUserId) 
+                        ? userCodes[createUserId] 
+                        : b.CreateUserId,
+                    UpdateUserCode = b.UpdateUserId != null && short.TryParse(b.UpdateUserId, out var updateUserId) && userCodes.ContainsKey(updateUserId) 
+                        ? userCodes[updateUserId] 
+                        : b.UpdateUserId
                 }).ToList();
 
                 return Ok(bookingDtos);
@@ -281,6 +325,13 @@ namespace BookingApi.Controllers
                     .Take(5)
                     .ToListAsync();
 
+                // Load UserCodes for CreateUserId and UpdateUserId
+                var userIds = bookings
+                    .Select(b => b.CreateUserId)
+                    .Concat(bookings.Select(b => b.UpdateUserId))
+                    .ToList();
+                var userCodes = await GetUserCodesAsync(userIds);
+
                 // Load CustomerInformation separately
                 var customerIds = bookings
                     .SelectMany(b => b.BookingParties)
@@ -364,7 +415,13 @@ namespace BookingApi.Controllers
                     CreateDttm = b.CreateDttm,
                     UpdateDttm = b.UpdateDttm,
                     CancelDttm = b.CancelDttm,
-                    BKCancelRemarks = b.BKCancelRemarks
+                    BKCancelRemarks = b.BKCancelRemarks,
+                    CreateUserCode = b.CreateUserId != null && short.TryParse(b.CreateUserId, out var createUserId) && userCodes.ContainsKey(createUserId) 
+                        ? userCodes[createUserId] 
+                        : b.CreateUserId,
+                    UpdateUserCode = b.UpdateUserId != null && short.TryParse(b.UpdateUserId, out var updateUserId) && userCodes.ContainsKey(updateUserId) 
+                        ? userCodes[updateUserId] 
+                        : b.UpdateUserId
                 }).ToList();
 
                 return Ok(bookingDtos);

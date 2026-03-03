@@ -1242,68 +1242,129 @@ class _HistoryPageState extends State<HistoryPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Created timestamp
+                    // Created timestamp with user
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 16,
-                          color: Colors.grey[600],
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              "Created: ",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            Text(
+                              () {
+                                final created = booking.bookingDate;
+                                return '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')} ${created.hour.toString().padLeft(2, '0')}:${created.minute.toString().padLeft(2, '0')}';
+                              }(),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF424242),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Created: ",
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+                        // Created by user (on the right side)
+                        if (booking.createUserCode != null)
+                          Row(
+                            children: [
+                              Text(
+                                "Created by: ",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                booking.createUserCode!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1B5E20),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        Text(
-                          () {
-                            final created = booking.bookingDate;
-                            return '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')} ${created.hour.toString().padLeft(2, '0')}:${created.minute.toString().padLeft(2, '0')}';
-                          }(),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF424242),
-                          ),
-                        ),
                       ],
                     ),
-                    // Updated timestamp (only if booking has been updated)
+                    // Updated timestamp with user (only if booking has been updated)
                     if (booking.updateDttm != null) ...[
                       const SizedBox(height: 8),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(
-                            Icons.update_rounded,
-                            size: 16,
-                            color: Colors.grey[600],
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.update_rounded,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                "Updated: ",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                              Text(
+                                () {
+                                  final updated = booking.updateDttm!;
+                                  return '${updated.year}-${updated.month.toString().padLeft(2, '0')}-${updated.day.toString().padLeft(2, '0')} ${updated.hour.toString().padLeft(2, '0')}:${updated.minute.toString().padLeft(2, '0')}';
+                                }(),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF424242),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Updated: ",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
+                          // Updated by user (on the right side)
+                          if (booking.updateUserCode != null)
+                            Row(
+                              children: [
+                                Text(
+                                  "Updated by: ",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                Text(
+                                  booking.updateUserCode!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1B5E20),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          Text(
-                            () {
-                              final updated = booking.updateDttm!;
-                              return '${updated.year}-${updated.month.toString().padLeft(2, '0')}-${updated.day.toString().padLeft(2, '0')} ${updated.hour.toString().padLeft(2, '0')}:${updated.minute.toString().padLeft(2, '0')}';
-                            }(),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF424242),
-                            ),
-                          ),
                         ],
                       ),
                     ],
+
+                    // Updated timestamp (only if booking has been updated)
+
+                    // Created by user
+
+                    // Updated by user
                   ],
                 ),
               ),
