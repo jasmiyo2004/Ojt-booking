@@ -29,6 +29,9 @@ namespace BookingApi.Models
         public string? UpdateUserId { get; set; }
         public DateTime? UpdateDttm { get; set; }
 
+        // Profile picture stored as binary — client sends/receives as base64 string
+        public byte[]? ProfilePicture { get; set; }
+
         // Navigation Properties
         [ForeignKey("StatusId")]
         public Status? Status { get; set; }

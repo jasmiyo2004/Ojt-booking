@@ -42,6 +42,8 @@ namespace BookingApi.Controllers
                     StatusId = u.UserInformation != null ? u.UserInformation.StatusId : null,
                     StatusDesc = u.UserInformation != null && u.UserInformation.Status != null 
                         ? u.UserInformation.Status.StatusDesc : null,
+                    ProfilePicture = u.UserInformation != null && u.UserInformation.ProfilePicture != null
+                        ? Convert.ToBase64String(u.UserInformation.ProfilePicture) : null,
                     u.Remarks,
                     u.CreateUserId,
                     u.CreateDttm,
@@ -78,6 +80,8 @@ namespace BookingApi.Controllers
                     StatusId = u.UserInformation != null ? u.UserInformation.StatusId : null,
                     StatusDesc = u.UserInformation != null && u.UserInformation.Status != null 
                         ? u.UserInformation.Status.StatusDesc : null,
+                    ProfilePicture = u.UserInformation != null && u.UserInformation.ProfilePicture != null
+                        ? Convert.ToBase64String(u.UserInformation.ProfilePicture) : null,
                     u.Remarks,
                     u.CreateUserId,
                     u.CreateDttm,
@@ -109,9 +113,11 @@ namespace BookingApi.Controllers
                     MiddleName = request.MiddleName,
                     LastName = request.LastName,
                     Email = request.Email,
-                    Number = request.Number,  // Store as string
+                    Number = request.Number,
                     UserCode = request.UserCode,
                     StatusId = request.StatusId,
+                    ProfilePicture = !string.IsNullOrEmpty(request.ProfilePicture)
+                        ? Convert.FromBase64String(request.ProfilePicture) : null,
                     CreateUserId = request.CreateUserId ?? "SYSTEM",
                     CreateDttm = DateTime.Now,
                     UpdateUserId = request.CreateUserId ?? "SYSTEM",
@@ -194,9 +200,13 @@ namespace BookingApi.Controllers
                     user.UserInformation.MiddleName = request.MiddleName ?? user.UserInformation.MiddleName;
                     user.UserInformation.LastName = request.LastName ?? user.UserInformation.LastName;
                     user.UserInformation.Email = request.Email ?? user.UserInformation.Email;
-                    user.UserInformation.Number = request.Number ?? user.UserInformation.Number;  // Store as string
+                    user.UserInformation.Number = request.Number ?? user.UserInformation.Number;
                     user.UserInformation.UserCode = request.UserCode ?? user.UserInformation.UserCode;
                     user.UserInformation.StatusId = request.StatusId ?? user.UserInformation.StatusId;
+                    if (!string.IsNullOrEmpty(request.ProfilePicture))
+                    {
+                        user.UserInformation.ProfilePicture = Convert.FromBase64String(request.ProfilePicture);
+                    }
                     user.UserInformation.UpdateUserId = request.UpdateUserId ?? "SYSTEM";
                     user.UserInformation.UpdateDttm = DateTime.Now;
                 }
@@ -246,13 +256,15 @@ namespace BookingApi.Controllers
                         StatusId = u.UserInformation != null ? u.UserInformation.StatusId : null,
                         StatusDesc = u.UserInformation != null && u.UserInformation.Status != null 
                             ? u.UserInformation.Status.StatusDesc : null,
-                        u.Remarks,
-                        u.CreateUserId,
-                        u.CreateDttm,
-                        u.UpdateUserId,
-                        u.UpdateDttm
-                    })
-                    .FirstOrDefaultAsync();
+                    ProfilePicture = u.UserInformation != null && u.UserInformation.ProfilePicture != null
+                        ? Convert.ToBase64String(u.UserInformation.ProfilePicture) : null,
+                    u.Remarks,
+                    u.CreateUserId,
+                    u.CreateDttm,
+                    u.UpdateUserId,
+                    u.UpdateDttm
+                })
+                .FirstOrDefaultAsync();
 
                 return Ok(new { message = "User updated successfully", user = updatedUser });
             }
@@ -324,13 +336,14 @@ namespace BookingApi.Controllers
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? Email { get; set; }
-        public string? Number { get; set; }  // Accept as string, convert to int
+        public string? Number { get; set; }
         public short? StatusId { get; set; }
         public short? UserTypeId { get; set; }
         public string? UserCode { get; set; }
         public string? Password { get; set; }
         public string? Remarks { get; set; }
         public string? CreateUserId { get; set; }
+        public string? ProfilePicture { get; set; }  // base64-encoded image
     }
 
     public class UpdateUserRequest
@@ -339,12 +352,13 @@ namespace BookingApi.Controllers
         public string? MiddleName { get; set; }
         public string? LastName { get; set; }
         public string? Email { get; set; }
-        public string? Number { get; set; }  // Accept as string, convert to int
+        public string? Number { get; set; }
         public short? StatusId { get; set; }
-        public short? UserTypeId { get; set; }  // Must match UserType.UserTypeId which is short
+        public short? UserTypeId { get; set; }
         public string? UserCode { get; set; }
         public string? Password { get; set; }
         public string? Remarks { get; set; }
         public string? UpdateUserId { get; set; }
+        public string? ProfilePicture { get; set; }  // base64-encoded image
     }
 }

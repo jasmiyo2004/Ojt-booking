@@ -17,6 +17,7 @@ class User {
   final DateTime? createDttm;
   final String? updateUserId;
   final DateTime? updateDttm;
+  final String? profilePicture; // base64-encoded image string
 
   User({
     required this.userId,
@@ -37,6 +38,7 @@ class User {
     this.createDttm,
     this.updateUserId,
     this.updateDttm,
+    this.profilePicture,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -50,7 +52,7 @@ class User {
       middleName: json['middleName'],
       lastName: json['lastName'],
       email: json['email'],
-      number: json['number']?.toString(), // Convert number (bigint) to string
+      number: json['number']?.toString(),
       userCode: json['userCode'],
       statusId: json['statusId'],
       statusDesc: json['statusDesc'],
@@ -63,6 +65,7 @@ class User {
       updateDttm: json['updateDttm'] != null
           ? DateTime.parse(json['updateDttm'])
           : null,
+      profilePicture: json['profilePicture'],
     );
   }
 
@@ -86,6 +89,7 @@ class User {
       'createDttm': createDttm?.toIso8601String(),
       'updateUserId': updateUserId,
       'updateDttm': updateDttm?.toIso8601String(),
+      'profilePicture': profilePicture,
     };
   }
 
@@ -132,6 +136,7 @@ class User {
     DateTime? createDttm,
     String? updateUserId,
     DateTime? updateDttm,
+    String? profilePicture,
   }) {
     return User(
       userId: userId ?? this.userId,
@@ -152,6 +157,7 @@ class User {
       createDttm: createDttm ?? this.createDttm,
       updateUserId: updateUserId ?? this.updateUserId,
       updateDttm: updateDttm ?? this.updateDttm,
+      profilePicture: profilePicture ?? this.profilePicture,
     );
   }
 }
