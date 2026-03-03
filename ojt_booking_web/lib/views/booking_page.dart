@@ -1169,42 +1169,59 @@ class _BookingPageState extends State<BookingPage> {
                               _driverController.text.isEmpty) {
                             // Debug: Print which fields are missing
                             print('=== MISSING FIELDS ===');
-                            if (selectedOrigin == "Select Origin")
+                            if (selectedOrigin == "Select Origin") {
                               print('- Origin');
-                            if (selectedDestination == "Select Destination")
+                            }
+                            if (selectedDestination == "Select Destination") {
                               print('- Destination');
+                            }
                             if (selectedService == null) print('- Service');
-                            if (selectedAgreementParty == "Search Selection")
+                            if (selectedAgreementParty == "Search Selection") {
                               print('- Agreement Party');
-                            if (selectedShipper == "Search Selection")
+                            }
+                            if (selectedShipper == "Search Selection") {
                               print('- Shipper');
-                            if (selectedConsignee == "Search Selection")
+                            }
+                            if (selectedConsignee == "Search Selection") {
                               print('- Consignee');
-                            if (selectedEquipment == "Search Selection")
+                            }
+                            if (selectedEquipment == "Search Selection") {
                               print('- Equipment');
-                            if (selectedCommodity == "Search Selection")
+                            }
+                            if (selectedCommodity == "Search Selection") {
                               print('- Commodity');
-                            if (selectedVessel == "Search Selection")
+                            }
+                            if (selectedVessel == "Search Selection") {
                               print('- Vessel');
-                            if (selectedVesselScheduleId == null)
+                            }
+                            if (selectedVesselScheduleId == null) {
                               print('- Vessel Schedule');
+                            }
                             if (selectedPayment == null) print('- Payment');
-                            if (selectedContainer == "Search Selection")
+                            if (selectedContainer == "Search Selection") {
                               print('- Container');
-                            if (_declaredValueController.text.isEmpty)
+                            }
+                            if (_declaredValueController.text.isEmpty) {
                               print('- Declared Value');
-                            if (_cargoDescController.text.isEmpty)
+                            }
+                            if (_cargoDescController.text.isEmpty) {
                               print('- Cargo Description');
-                            if (_weightController.text.isEmpty)
+                            }
+                            if (_weightController.text.isEmpty) {
                               print('- Weight');
-                            if (_sealController.text.isEmpty)
+                            }
+                            if (_sealController.text.isEmpty) {
                               print('- Seal Number');
-                            if (_truckerController.text.isEmpty)
+                            }
+                            if (_truckerController.text.isEmpty) {
                               print('- Trucker');
-                            if (_plateController.text.isEmpty)
+                            }
+                            if (_plateController.text.isEmpty) {
                               print('- Plate Number');
-                            if (_driverController.text.isEmpty)
+                            }
+                            if (_driverController.text.isEmpty) {
                               print('- Driver');
+                            }
                             print('======================');
 
                             ErrorDialog.showConfirmError(context);

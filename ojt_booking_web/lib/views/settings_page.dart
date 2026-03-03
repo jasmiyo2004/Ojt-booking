@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'user_management_page.dart';
 import 'landing_page.dart';
 import '../services/user_session.dart';
@@ -32,10 +35,41 @@ class _SettingsPageState extends State<SettingsPage> {
       final sessionData = _userSession.currentUser;
 
       if (sessionData != null) {
-        setState(() {
-          _currentUserData = sessionData;
-          _isLoading = false;
-        });
+        // Fetch complete user data from API to get profile picture
+        try {
+          final userId = sessionData['userId'];
+          final usersData = await _apiService.getUsers();
+          final currentUserFromApi = usersData.firstWhere(
+            (user) => user['userId'] == userId,
+            orElse: () => {},
+          );
+
+          // Merge API data with session data to include profile picture
+          if (currentUserFromApi.isNotEmpty) {
+            final updatedUserData = Map<String, dynamic>.from(sessionData);
+            updatedUserData['profilePicture'] =
+                currentUserFromApi['profilePicture'];
+
+            // Update session with profile picture
+            _userSession.setUser(updatedUserData);
+
+            setState(() {
+              _currentUserData = updatedUserData;
+              _isLoading = false;
+            });
+          } else {
+            setState(() {
+              _currentUserData = sessionData;
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          print('Error fetching user profile picture: $e');
+          setState(() {
+            _currentUserData = sessionData;
+            _isLoading = false;
+          });
+        }
       } else {
         setState(() => _isLoading = false);
       }
@@ -274,6 +308,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final userType = _currentUserData!['userType'] ?? 'Unknown';
     final initials = _userSession.getInitials();
 
+    // Decode profile picture if available
+    Uint8List? imgBytes;
+    if (_currentUserData!['profilePicture'] != null &&
+        _currentUserData!['profilePicture']!.isNotEmpty) {
+      try {
+        imgBytes = base64Decode(_currentUserData!['profilePicture']!);
+      } catch (_) {}
+    }
+
     return InkWell(
       onTap: () => _showViewProfileDialog(),
       borderRadius: BorderRadius.circular(16),
@@ -301,23 +344,33 @@ class _SettingsPageState extends State<SettingsPage> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: imgBytes != null
+                    ? Colors.transparent
+                    : Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.3),
                   width: 2,
                 ),
+                image: imgBytes != null
+                    ? DecorationImage(
+                        image: MemoryImage(imgBytes),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
-              child: Center(
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              child: imgBytes == null
+                  ? Center(
+                      child: Text(
+                        initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 16),
             // User Info
@@ -533,6 +586,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final userType = _currentUserData!['userType'] ?? 'Unknown';
     final initials = _userSession.getInitials();
 
+    // Decode profile picture if available
+    Uint8List? imgBytes;
+    if (_currentUserData!['profilePicture'] != null &&
+        _currentUserData!['profilePicture']!.isNotEmpty) {
+      try {
+        imgBytes = base64Decode(_currentUserData!['profilePicture']!);
+      } catch (_) {}
+    }
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -574,19 +636,29 @@ class _SettingsPageState extends State<SettingsPage> {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.3),
+                        color: imgBytes != null
+                            ? Colors.transparent
+                            : Colors.white.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
+                        image: imgBytes != null
+                            ? DecorationImage(
+                                image: MemoryImage(imgBytes),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                      child: Center(
-                        child: Text(
-                          initials,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      child: imgBytes == null
+                          ? Center(
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -923,6 +995,10 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
+  // Profile picture
+  Uint8List? _imageBytes;
+  String? _base64Image;
+
   @override
   void initState() {
     super.initState();
@@ -942,6 +1018,15 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
       text: widget.userData['number'] ?? '',
     );
     _passwordController = TextEditingController();
+
+    // Load existing profile picture
+    if (widget.userData['profilePicture'] != null &&
+        widget.userData['profilePicture']!.isNotEmpty) {
+      try {
+        _imageBytes = base64Decode(widget.userData['profilePicture']!);
+        _base64Image = widget.userData['profilePicture'];
+      } catch (_) {}
+    }
   }
 
   @override
@@ -953,6 +1038,135 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     _numberController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 512,
+      );
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _imageBytes = bytes;
+          _base64Image = base64Encode(bytes);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+    if (mounted) {
+      Navigator.pop(context); // close bottom sheet
+    }
+  }
+
+  void _showImagePickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Profile Photo',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Choose how to add a photo',
+                style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+              ),
+              const SizedBox(height: 20),
+              _sheetOption(
+                icon: Icons.camera_alt_rounded,
+                label: 'Take Photo',
+                color: const Color(0xFF2196F3),
+                onTap: () => _pickImage(ImageSource.camera),
+              ),
+              const SizedBox(height: 12),
+              _sheetOption(
+                icon: Icons.photo_library_rounded,
+                label: 'Choose from Gallery',
+                color: const Color(0xFFD4AF37),
+                onTap: () => _pickImage(ImageSource.gallery),
+              ),
+              if (_imageBytes != null) ...[
+                const SizedBox(height: 12),
+                _sheetOption(
+                  icon: Icons.delete_outline_rounded,
+                  label: 'Remove Photo',
+                  color: const Color(0xFFEF5350),
+                  onTap: () {
+                    setState(() {
+                      _imageBytes = null;
+                      _base64Image = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sheetOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(width: 14),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getInitials() {
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    String initials = '';
+    if (firstName.isNotEmpty) initials += firstName[0].toUpperCase();
+    if (lastName.isNotEmpty) initials += lastName[0].toUpperCase();
+    return initials.isEmpty ? '?' : initials;
   }
 
   @override
@@ -992,6 +1206,86 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Profile picture picker
+                      Center(
+                        child: GestureDetector(
+                          onTap: _showImagePickerSheet,
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  color: _imageBytes != null
+                                      ? Colors.transparent
+                                      : const Color(0xFF2E7D32),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 3,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                  image: _imageBytes != null
+                                      ? DecorationImage(
+                                          image: MemoryImage(_imageBytes!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                                child: _imageBytes == null
+                                    ? Center(
+                                        child: Text(
+                                          _getInitials(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFD4AF37),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          'Tap to change photo',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
                       _buildTextField(
                         'First Name',
                         _firstNameController,
@@ -1022,6 +1316,19 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                         Icons.phone,
                         required: true,
                         keyboardType: TextInputType.phone,
+                        maxLength: 11,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter Number';
+                          }
+                          if (value.trim().length != 11) {
+                            return 'Phone number must be exactly 11 digits';
+                          }
+                          if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
+                            return 'Phone number must contain only digits';
+                          }
+                          return null;
+                        },
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1134,6 +1441,8 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     IconData icon, {
     bool required = false,
     TextInputType? keyboardType,
+    int? maxLength,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -1158,15 +1467,19 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
             child: TextFormField(
               controller: controller,
               keyboardType: keyboardType,
+              maxLength: maxLength,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 prefixIcon: Icon(icon, size: 20),
+                counterText: maxLength != null ? '' : null,
               ),
-              validator: required
-                  ? (value) => value == null || value.trim().isEmpty
-                        ? 'Please enter $label'
-                        : null
-                  : null,
+              validator:
+                  validator ??
+                  (required
+                      ? (value) => value == null || value.trim().isEmpty
+                            ? 'Please enter $label'
+                            : null
+                      : null),
             ),
           ),
         ],
@@ -1186,6 +1499,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
         'lastName': _lastNameController.text.trim(),
         'email': _emailController.text.trim(),
         'number': _numberController.text.trim(),
+        'profilePicture': _base64Image,
         'updateUserId': 'SYSTEM',
       };
 

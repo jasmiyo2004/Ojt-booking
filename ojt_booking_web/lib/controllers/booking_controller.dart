@@ -23,9 +23,7 @@ class BookingController {
     int? currentLocationId, // Add parameter to check against
     String? errorType, // "origin" or "destination"
   }) async {
-    if (_cachedLocations == null) {
-      _cachedLocations = await _apiService.getLocations();
-    }
+    _cachedLocations ??= await _apiService.getLocations();
     if (!context.mounted) return;
 
     String searchQuery = '';

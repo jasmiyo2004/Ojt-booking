@@ -19,10 +19,12 @@ class _UserManagementPageState extends State<UserManagementPage> {
   List<User> _users = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  String _statusFilter = 'All'; // All, Active, Inactive
 
   // Pagination
   int _currentPage = 1;
-  static const int _itemsPerPage = 8;
+  static const int _itemsPerPage = 5;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -34,6 +36,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -52,8 +55,18 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 
   List<User> get _filteredUsers {
-    if (_searchQuery.isEmpty) return _users;
-    return _users.where((user) {
+    var filtered = _users;
+
+    // Apply status filter
+    if (_statusFilter == 'Active') {
+      filtered = filtered.where((user) => user.statusDesc == 'Active').toList();
+    } else if (_statusFilter == 'Inactive') {
+      filtered = filtered.where((user) => user.statusDesc != 'Active').toList();
+    }
+
+    // Apply search filter
+    if (_searchQuery.isEmpty) return filtered;
+    return filtered.where((user) {
       final fullName = user.fullName.toLowerCase();
       final email = user.email?.toLowerCase() ?? '';
       final userCode = user.userCode?.toLowerCase() ?? '';
@@ -210,36 +223,167 @@ class _UserManagementPageState extends State<UserManagementPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Search bar
-                        Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F5F5),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey[200]!),
-                          ),
-                          child: TextField(
-                            onChanged: (value) => setState(() {
-                              _searchQuery = value;
-                              _currentPage = 1;
-                            }),
-                            decoration: InputDecoration(
-                              hintText: 'Search by name, code, or email…',
-                              hintStyle: TextStyle(
-                                color: Colors.grey[400],
-                                fontSize: 14,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Colors.grey[400],
-                                size: 20,
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
+                        // Create New User button and Status Filter
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showAddUserDialog(),
+                                icon: const Icon(
+                                  Icons.person_add_rounded,
+                                  size: 20,
+                                ),
+                                label: const Text(
+                                  'Create New User',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFD4AF37),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 2,
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _statusFilter,
+                                    isExpanded: true,
+                                    icon: const Icon(
+                                      Icons.filter_list_rounded,
+                                      size: 20,
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF212121),
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'All',
+                                        child: Text('All Users'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'Active',
+                                        child: Text('Active'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'Inactive',
+                                        child: Text('Inactive'),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _statusFilter = value ?? 'All';
+                                        _currentPage = 1;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Search bar with clear button
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: TextField(
+                                  controller: _searchController,
+                                  onChanged: (value) => setState(() {
+                                    _searchQuery = value;
+                                    _currentPage = 1;
+                                  }),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search by name, code, or email…',
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 14,
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      color: Colors.grey[400],
+                                      size: 20,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Clear button
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: _searchQuery.isNotEmpty
+                                    ? const Color(0xFFEF5350)
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: _searchQuery.isNotEmpty
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFFEF5350,
+                                          ).withValues(alpha: 0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              child: IconButton(
+                                onPressed: _searchQuery.isNotEmpty
+                                    ? () {
+                                        setState(() {
+                                          _searchController.clear();
+                                          _searchQuery = '';
+                                          _currentPage = 1;
+                                        });
+                                      }
+                                    : null,
+                                icon: Icon(
+                                  Icons.clear_rounded,
+                                  color: _searchQuery.isNotEmpty
+                                      ? Colors.white
+                                      : Colors.grey[500],
+                                  size: 22,
+                                ),
+                                tooltip: 'Clear search',
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -283,16 +427,6 @@ class _UserManagementPageState extends State<UserManagementPage> {
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddUserDialog(),
-        backgroundColor: const Color(0xFFD4AF37),
-        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-        label: const Text(
-          'Add User',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        elevation: 4,
       ),
     );
   }
@@ -862,8 +996,13 @@ class _UserManagementPageState extends State<UserManagementPage> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF757575),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: const TextStyle(
@@ -886,6 +1025,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
     showDialog(
       context: context,
       builder: (context) => UserFormDialog(
+        existingUsers: _users,
         onSave: (userData) async {
           final parentContext = this.context;
           try {
@@ -919,11 +1059,31 @@ class _UserManagementPageState extends State<UserManagementPage> {
       context: parentContext,
       builder: (_) => UserFormDialog(
         user: user,
+        existingUsers: _users,
         onSave: (userData) async {
           final sm = ScaffoldMessenger.of(parentContext);
           try {
             await _apiService.updateUser(user.userId, userData);
             await _loadData();
+
+            // Update session if the edited user is the currently logged-in user
+            final currentUserId = UserSession().userId;
+            if (currentUserId == user.userId) {
+              final updatedUserData = Map<String, dynamic>.from(
+                UserSession().currentUser ?? {},
+              );
+              updatedUserData['firstName'] = userData['firstName'];
+              updatedUserData['middleName'] = userData['middleName'];
+              updatedUserData['lastName'] = userData['lastName'];
+              updatedUserData['email'] = userData['email'];
+              updatedUserData['number'] = userData['number'];
+              updatedUserData['profilePicture'] = userData['profilePicture'];
+              updatedUserData['fullName'] =
+                  '${userData['firstName']} ${userData['middleName'] ?? ''} ${userData['lastName']}'
+                      .trim();
+              UserSession().setUser(updatedUserData);
+            }
+
             if (mounted) {
               SuccessDialog.show(
                 parentContext,
@@ -1011,9 +1171,15 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
 class UserFormDialog extends StatefulWidget {
   final User? user;
+  final List<User> existingUsers;
   final Function(Map<String, dynamic>) onSave;
 
-  const UserFormDialog({super.key, this.user, required this.onSave});
+  const UserFormDialog({
+    super.key,
+    this.user,
+    required this.existingUsers,
+    required this.onSave,
+  });
 
   @override
   State<UserFormDialog> createState() => _UserFormDialogState();
@@ -1201,12 +1367,22 @@ class _UserFormDialogState extends State<UserFormDialog> {
         ? const Color(0xFFD4AF37)
         : const Color(0xFF2E7D32);
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 24,
+        vertical: isMobile ? 20 : 40,
+      ),
       child: Container(
-        width: 480,
-        constraints: const BoxConstraints(maxHeight: 720),
+        width: isMobile ? double.infinity : 500,
+        constraints: BoxConstraints(
+          maxHeight:
+              MediaQuery.of(context).size.height * (isMobile ? 0.9 : 0.85),
+          maxWidth: isMobile ? screenWidth - 32 : 500,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -1215,7 +1391,12 @@ class _UserFormDialogState extends State<UserFormDialog> {
               // ── Header ──────────────
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 24, 16, 24),
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 16 : 24,
+                  isMobile ? 16 : 24,
+                  isMobile ? 8 : 16,
+                  isMobile ? 16 : 24,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F5F5),
                   borderRadius: const BorderRadius.only(
@@ -1228,30 +1409,38 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     Icon(
                       isEdit ? Icons.edit_rounded : Icons.person_add_rounded,
                       color: const Color(0xFFD4AF37),
-                      size: 22,
+                      size: isMobile ? 20 : 22,
                     ),
                     const SizedBox(width: 10),
-                    Text(
-                      isEdit ? 'Edit User' : 'Add New User',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF212121),
+                    Expanded(
+                      child: Text(
+                        isEdit ? 'Edit User' : 'Add New User',
+                        style: TextStyle(
+                          fontSize: isMobile ? 18 : 20,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF212121),
+                        ),
                       ),
                     ),
-                    const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close, color: Colors.grey),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
               ),
 
               // ── Body ────────────────
-              Expanded(
+              Flexible(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                  padding: EdgeInsets.fromLTRB(
+                    isMobile ? 16 : 24,
+                    isMobile ? 16 : 20,
+                    isMobile ? 16 : 24,
+                    isMobile ? 12 : 16,
+                  ),
                   child: Column(
                     children: [
                       // Profile photo picker
@@ -1374,6 +1563,19 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         Icons.phone,
                         required: true,
                         keyboardType: TextInputType.phone,
+                        maxLength: 11,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter Phone Number';
+                          }
+                          if (value.length != 11) {
+                            return 'Phone number must be exactly 11 digits';
+                          }
+                          if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                            return 'Phone number must contain only digits';
+                          }
+                          return null;
+                        },
                       ),
 
                       // Status (edit mode only)
@@ -1495,22 +1697,33 @@ class _UserFormDialogState extends State<UserFormDialog> {
   }
 
   Widget _sectionLabel(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey[500]),
-        const SizedBox(width: 6),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[500],
-            letterSpacing: 0.5,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 16, color: const Color(0xFFD4AF37)),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(child: Divider(color: Colors.grey[200])),
-      ],
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF212121),
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Container(height: 1.5, color: Colors.grey[200])),
+        ],
+      ),
     );
   }
 
@@ -1520,39 +1733,73 @@ class _UserFormDialogState extends State<UserFormDialog> {
     IconData icon, {
     bool required = false,
     TextInputType? keyboardType,
+    int? maxLength,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, size: 20, color: Colors.grey[500]),
-          filled: true,
-          fillColor: const Color(0xFFF8F8F8),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[200]!),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF424242),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[200]!),
+          TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            maxLength: maxLength,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF212121)),
+            decoration: InputDecoration(
+              hintText: 'Enter $label',
+              hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+              prefixIcon: Container(
+                width: 44,
+                alignment: Alignment.center,
+                child: Icon(icon, size: 18, color: Colors.grey[500]),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8F8F8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFD4AF37),
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: const EdgeInsets.only(
+                left: 0,
+                right: 12,
+                top: 12,
+                bottom: 12,
+              ),
+              counterText: maxLength != null ? '' : null,
+              isDense: true,
+            ),
+            validator:
+                validator ??
+                (required
+                    ? (value) => (value == null || value.isEmpty)
+                          ? 'Please enter $label'
+                          : null
+                    : null),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-        validator: required
-            ? (value) => (value == null || value.isEmpty)
-                  ? 'Please enter $label'
-                  : null
-            : null,
+        ],
       ),
     );
   }
@@ -1567,33 +1814,61 @@ class _UserFormDialogState extends State<UserFormDialog> {
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField<T>(
-        initialValue: value,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, size: 20, color: Colors.grey[500]),
-          filled: true,
-          fillColor: const Color(0xFFF8F8F8),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[200]!),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF424242),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[200]!),
+          DropdownButtonFormField<T>(
+            value: value,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF212121)),
+            decoration: InputDecoration(
+              hintText: 'Select $label',
+              hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+              prefixIcon: Container(
+                width: 44,
+                alignment: Alignment.center,
+                child: Icon(icon, size: 18, color: Colors.grey[500]),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8F8F8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFD4AF37),
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: const EdgeInsets.only(
+                left: 0,
+                right: 12,
+                top: 12,
+                bottom: 12,
+              ),
+              isDense: true,
+            ),
+            items: items,
+            onChanged: onChanged,
+            validator: validator,
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-        items: items,
-        onChanged: onChanged,
-        validator: validator,
+        ],
       ),
     );
   }
@@ -1601,52 +1876,80 @@ class _UserFormDialogState extends State<UserFormDialog> {
   Widget _buildPasswordField(bool isEdit) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: _passwordController,
-        obscureText: _obscurePassword,
-        decoration: InputDecoration(
-          labelText: isEdit ? 'Password (leave blank to keep)' : 'Password',
-          prefixIcon: Icon(
-            Icons.lock_outline,
-            size: 20,
-            color: Colors.grey[500],
-          ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscurePassword
-                  ? Icons.visibility_outlined
-                  : Icons.visibility_off_outlined,
-              size: 20,
-              color: Colors.grey[500],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              isEdit ? 'Password (leave blank to keep)' : 'Password',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF424242),
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            onPressed: () =>
-                setState(() => _obscurePassword = !_obscurePassword),
           ),
-          filled: true,
-          fillColor: const Color(0xFFF8F8F8),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[200]!),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF212121)),
+            decoration: InputDecoration(
+              hintText: 'Enter password',
+              hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+              prefixIcon: Container(
+                width: 44,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.lock_outline,
+                  size: 18,
+                  color: Colors.grey[500],
+                ),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  size: 18,
+                  color: Colors.grey[500],
+                ),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8F8F8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[200]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFFD4AF37),
+                  width: 1.5,
+                ),
+              ),
+              contentPadding: const EdgeInsets.only(
+                left: 0,
+                right: 12,
+                top: 12,
+                bottom: 12,
+              ),
+              isDense: true,
+            ),
+            validator: (value) {
+              if (!isEdit && (value == null || value.isEmpty)) {
+                return 'Please enter password';
+              }
+              return null;
+            },
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.grey[200]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-        validator: (value) {
-          if (!isEdit && (value == null || value.isEmpty)) {
-            return 'Please enter password';
-          }
-          return null;
-        },
+        ],
       ),
     );
   }
@@ -1655,6 +1958,62 @@ class _UserFormDialogState extends State<UserFormDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     final isEdit = widget.user != null;
+    final enteredUserCode = _userCodeController.text.trim();
+
+    // Check for duplicate user code
+    final isDuplicate = widget.existingUsers.any((user) {
+      // If editing, exclude the current user from the check
+      if (isEdit && user.userId == widget.user!.userId) {
+        return false;
+      }
+      return user.userCode?.toLowerCase() == enteredUserCode.toLowerCase();
+    });
+
+    if (isDuplicate) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.warning_rounded, color: Colors.red[700], size: 28),
+              const SizedBox(width: 12),
+              const Text(
+                'Duplicate User Code',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'USER CODE ALREADY EXISTED, PLEASE TRY ANOTHER',
+            style: TextStyle(fontSize: 14),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'OK',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
 
     if (isEdit) {
       final confirmed = await showDialog<bool>(

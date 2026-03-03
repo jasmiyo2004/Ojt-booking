@@ -14,7 +14,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isCalendarExpanded = false;
+  final bool _isCalendarExpanded = false;
   final ApiService _apiService = ApiService();
   bool _isLoading = true; // Add loading state
 
@@ -534,7 +534,7 @@ class _HomePageState extends State<HomePage> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _recentBookings.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final booking = _recentBookings[index];

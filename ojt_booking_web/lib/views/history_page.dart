@@ -305,7 +305,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                           12,
                                         ),
                                         itemCount: paginatedBookings.length,
-                                        separatorBuilder: (_, __) =>
+                                        separatorBuilder: (_, _) =>
                                             const SizedBox(height: 12),
                                         itemBuilder: (context, index) {
                                           final booking =
