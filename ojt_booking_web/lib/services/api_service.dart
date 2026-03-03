@@ -310,6 +310,26 @@ class ApiService {
     }
   }
 
+  /// Delete booking (soft delete - sets StatusId to 6)
+  /// DELETE /api/bookings/{id}
+  Future<bool> deleteBooking(String id, {String? userId}) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseUrl/bookings/$id'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'UserId': userId ?? 'SYSTEM'}),
+          )
+          .timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) return true;
+      return false;
+    } catch (e, st) {
+      print('API call failed (deleteBooking). Error: $e');
+      print(st);
+      return false;
+    }
+  }
+
   // ============================================
   // LOCATIONS API
   // ============================================

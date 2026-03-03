@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import '../controllers/booking_controller.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/remarks_dialog.dart';
 import '../widgets/success_dialog.dart';
@@ -32,10 +33,15 @@ class _HistoryPageState extends State<HistoryPage> {
   List<Booking> get filteredBookings {
     List<Booking> filtered;
 
+    // First, exclude deleted bookings (StatusId = 6 or status = 'DELETED')
+    List<Booking> nonDeleted = _bookings
+        .where((b) => b.status.toUpperCase() != 'DELETED')
+        .toList();
+
     if (_selectedFilter == 'All') {
-      filtered = _bookings;
+      filtered = nonDeleted;
     } else {
-      filtered = _bookings
+      filtered = nonDeleted
           .where((b) => b.status.toUpperCase() == _selectedFilter.toUpperCase())
           .toList();
     }
@@ -659,6 +665,124 @@ class _HistoryPageState extends State<HistoryPage> {
                   }
                 },
               ),
+              // Show Delete button only for cancelled bookings
+              if (booking.status.toUpperCase() == 'CANCELLED') ...[
+                const SizedBox(width: 8),
+                _buildActionButton(
+                  icon: Icons.delete_rounded,
+                  label: 'Delete',
+                  color: const Color(0xFF9E9E9E),
+                  onTap: () async {
+                    // Show confirmation dialog
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        title: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_rounded,
+                              color: Colors.orange[700],
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Delete Booking',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: Text(
+                          'Are you sure you want to delete booking: ${booking.referenceNumber}?\n\nThis will remove it from the transaction history.',
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text(
+                              'No',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFEF5350),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Yes',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirmed != true) return;
+
+                    // Call API to delete booking
+                    try {
+                      final success = await _api.deleteBooking(
+                        booking.id,
+                        userId: UserSession().userId?.toString(),
+                      );
+
+                      if (success) {
+                        // Show success message
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Booking ${booking.referenceNumber} deleted successfully',
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+
+                        // Reload bookings
+                        await _loadBookings();
+                      } else {
+                        // Show error
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to delete booking'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      // Show error
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
             ],
           ),
         ],

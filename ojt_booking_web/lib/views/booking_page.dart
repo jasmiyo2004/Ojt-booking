@@ -7,6 +7,7 @@ import '../models/customer_model.dart';
 import '../models/booking_model.dart';
 import '../models/location_model.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
 import '../widgets/success_dialog.dart';
 import '../widgets/error_dialog.dart';
 import '../widgets/confirm_dialog.dart';
@@ -1247,11 +1248,13 @@ class _BookingPageState extends State<BookingPage> {
                             'Driver': _driverController.text.isNotEmpty
                                 ? _driverController.text
                                 : null,
-                            'CreateUserId': 'SYSTEM',
+                            'CreateUserId':
+                                UserSession().userId?.toString() ?? 'SYSTEM',
                             'CreateDttm': DateTime.now()
                                 .toUtc()
                                 .toIso8601String(),
-                            'UpdateUserId': 'SYSTEM',
+                            'UpdateUserId':
+                                UserSession().userId?.toString() ?? 'SYSTEM',
                             'UpdateDttm': DateTime.now()
                                 .toUtc()
                                 .toIso8601String(),

@@ -30,6 +30,7 @@ namespace BookingApi.Controllers
             try
             {
                 var bookings = await _context.Bookings
+                    .Where(b => b.StatusId != 6) // Exclude deleted bookings
                     .Include(b => b.Status)
                     .Include(b => b.OriginLocation)
                     .Include(b => b.DestinationLocation)
@@ -258,6 +259,7 @@ namespace BookingApi.Controllers
             {
                 // Get top 5 most recent bookings sorted by CreateDttm descending
                 var bookings = await _context.Bookings
+                    .Where(b => b.StatusId != 6) // Exclude deleted bookings
                     .Include(b => b.Status)
                     .Include(b => b.OriginLocation)
                     .Include(b => b.DestinationLocation)
@@ -523,9 +525,9 @@ namespace BookingApi.Controllers
                     BookingId = booking.BookingId,
                     PartyTypeId = 10, // Agreement Party
                     CustomerId = request.AgreementPartyId.Value,
-                    CreateUserId = "SYSTEM",
+                    CreateUserId = request.CreateUserId ?? "SYSTEM",
                     CreateDttm = philippineTime,
-                    UpdateUserId = "SYSTEM",
+                    UpdateUserId = request.UpdateUserId ?? "SYSTEM",
                     UpdateDttm = philippineTime
                 });
             }
@@ -537,9 +539,9 @@ namespace BookingApi.Controllers
                     BookingId = booking.BookingId,
                     PartyTypeId = 11, // Shipper Party
                     CustomerId = request.ShipperPartyId.Value,
-                    CreateUserId = "SYSTEM",
+                    CreateUserId = request.CreateUserId ?? "SYSTEM",
                     CreateDttm = philippineTime,
-                    UpdateUserId = "SYSTEM",
+                    UpdateUserId = request.UpdateUserId ?? "SYSTEM",
                     UpdateDttm = philippineTime
                 });
             }
@@ -551,9 +553,9 @@ namespace BookingApi.Controllers
                     BookingId = booking.BookingId,
                     PartyTypeId = 12, // Consignee Party
                     CustomerId = request.ConsigneePartyId.Value,
-                    CreateUserId = "SYSTEM",
+                    CreateUserId = request.CreateUserId ?? "SYSTEM",
                     CreateDttm = philippineTime,
-                    UpdateUserId = "SYSTEM",
+                    UpdateUserId = request.UpdateUserId ?? "SYSTEM",
                     UpdateDttm = philippineTime
                 });
             }
@@ -614,7 +616,11 @@ namespace BookingApi.Controllers
                     {
                         BookingId = booking.BookingId,
                         PartyTypeId = 10, // Agreement Party
-                        CustomerId = request.AgreementPartyId.Value
+                        CustomerId = request.AgreementPartyId.Value,
+                        CreateUserId = request.UpdateUserId ?? "SYSTEM",
+                        CreateDttm = philippineTime,
+                        UpdateUserId = request.UpdateUserId ?? "SYSTEM",
+                        UpdateDttm = philippineTime
                     });
                 }
 
@@ -624,7 +630,11 @@ namespace BookingApi.Controllers
                     {
                         BookingId = booking.BookingId,
                         PartyTypeId = 11, // Shipper Party
-                        CustomerId = request.ShipperPartyId.Value
+                        CustomerId = request.ShipperPartyId.Value,
+                        CreateUserId = request.UpdateUserId ?? "SYSTEM",
+                        CreateDttm = philippineTime,
+                        UpdateUserId = request.UpdateUserId ?? "SYSTEM",
+                        UpdateDttm = philippineTime
                     });
                 }
 
@@ -634,7 +644,11 @@ namespace BookingApi.Controllers
                     {
                         BookingId = booking.BookingId,
                         PartyTypeId = 12, // Consignee Party
-                        CustomerId = request.ConsigneePartyId.Value
+                        CustomerId = request.ConsigneePartyId.Value,
+                        CreateUserId = request.UpdateUserId ?? "SYSTEM",
+                        CreateDttm = philippineTime,
+                        UpdateUserId = request.UpdateUserId ?? "SYSTEM",
+                        UpdateDttm = philippineTime
                     });
                 }
             }
@@ -783,9 +797,35 @@ namespace BookingApi.Controllers
 
             return Ok(refreshed);
         }
+
+        // DELETE: api/Bookings/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBooking(short id, [FromBody] DeleteRequest? req)
+        {
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null) return NotFound();
+
+            var philippineTime = GetPhilippineTime();
+
+            // Set StatusId to 6 (DELETED) - soft delete
+            booking.StatusId = 6;
+            booking.UpdateDttm = philippineTime;
+            booking.UpdateUserId = req?.UserId ?? "SYSTEM";
+
+            _context.Bookings.Update(booking);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Booking deleted successfully" });
+        }
     }
 
     public class CancelRequest
+    {
+        public string? UserId { get; set; }
+        public string? Remarks { get; set; }
+    }
+
+    public class DeleteRequest
     {
         public string? UserId { get; set; }
         public string? Remarks { get; set; }
