@@ -23,6 +23,12 @@ namespace BookingApi.Controllers
             return DateTime.UtcNow.AddHours(8);
         }
 
+        // Helper method to get current UTC time for database storage
+        private DateTime GetUtcNow()
+        {
+            return DateTime.UtcNow;
+        }
+
         // Helper method to get UserCodes from UserIds
         private async Task<Dictionary<short, string>> GetUserCodesAsync(IEnumerable<string?> userIds)
         {
@@ -273,7 +279,7 @@ namespace BookingApi.Controllers
             // Total Bookings with StatusId = 4 (BOOKED)
             var totalBookings = await _context.Bookings.CountAsync(b => b.StatusId == 4);
             
-            // Booked Today - bookings created today in Philippine time with StatusId = 4
+            // Booked Today - bookings created today in Philippine time with StatusId = 4 (exclude deleted)
             var bookedToday = await _context.Bookings.CountAsync(b => 
                 b.StatusId == 4 && 
                 b.CreateDttm >= todayStartUtc && 
@@ -283,7 +289,7 @@ namespace BookingApi.Controllers
             // Number of Users with StatusId = 1 in UserInformation table
             var numberOfUsers = await _context.UserInformations.CountAsync(ui => ui.StatusId == 1);
             
-            // Canceled - bookings with StatusId = 5 (CANCELED)
+            // Canceled - bookings with StatusId = 5 (CANCELED) - exclude deleted (StatusId = 6)
             var canceled = await _context.Bookings.CountAsync(b => b.StatusId == 5);
 
             return new
@@ -540,7 +546,7 @@ namespace BookingApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Booking>> PostBooking(CreateBookingRequest request)
         {
-            var philippineTime = GetPhilippineTime();
+            var utcNow = GetUtcNow();
             
             // Create the booking
             var booking = new Booking
@@ -563,8 +569,8 @@ namespace BookingApi.Controllers
                 Trucker = request.Trucker,
                 PlateNumber = request.PlateNumber,
                 Driver = request.Driver,
-                CreateDttm = philippineTime,
-                UpdateDttm = philippineTime,
+                CreateDttm = utcNow,
+                UpdateDttm = utcNow,
                 CreateUserId = request.CreateUserId ?? "SYSTEM",
                 UpdateUserId = request.UpdateUserId ?? "SYSTEM"
             };
@@ -583,9 +589,9 @@ namespace BookingApi.Controllers
                     PartyTypeId = 10, // Agreement Party
                     CustomerId = request.AgreementPartyId.Value,
                     CreateUserId = request.CreateUserId ?? "SYSTEM",
-                    CreateDttm = philippineTime,
+                    CreateDttm = utcNow,
                     UpdateUserId = request.UpdateUserId ?? "SYSTEM",
-                    UpdateDttm = philippineTime
+                    UpdateDttm = utcNow
                 });
             }
 
@@ -597,9 +603,9 @@ namespace BookingApi.Controllers
                     PartyTypeId = 11, // Shipper Party
                     CustomerId = request.ShipperPartyId.Value,
                     CreateUserId = request.CreateUserId ?? "SYSTEM",
-                    CreateDttm = philippineTime,
+                    CreateDttm = utcNow,
                     UpdateUserId = request.UpdateUserId ?? "SYSTEM",
-                    UpdateDttm = philippineTime
+                    UpdateDttm = utcNow
                 });
             }
 
@@ -611,9 +617,9 @@ namespace BookingApi.Controllers
                     PartyTypeId = 12, // Consignee Party
                     CustomerId = request.ConsigneePartyId.Value,
                     CreateUserId = request.CreateUserId ?? "SYSTEM",
-                    CreateDttm = philippineTime,
+                    CreateDttm = utcNow,
                     UpdateUserId = request.UpdateUserId ?? "SYSTEM",
-                    UpdateDttm = philippineTime
+                    UpdateDttm = utcNow
                 });
             }
 
@@ -636,7 +642,7 @@ namespace BookingApi.Controllers
             
             if (booking == null) return NotFound();
 
-            var philippineTime = GetPhilippineTime();
+            var utcNow = GetUtcNow();
 
             // Update booking fields
             booking.BookingNo = request.BookingNo ?? booking.BookingNo;
@@ -658,7 +664,7 @@ namespace BookingApi.Controllers
             booking.PlateNumber = request.PlateNumber ?? booking.PlateNumber;
             booking.Driver = request.Driver ?? booking.Driver;
             booking.UpdateUserId = request.UpdateUserId ?? "SYSTEM";
-            booking.UpdateDttm = philippineTime;
+            booking.UpdateDttm = utcNow;
 
             // Update booking parties if provided
             if (request.AgreementPartyId.HasValue || request.ShipperPartyId.HasValue || request.ConsigneePartyId.HasValue)
@@ -675,9 +681,9 @@ namespace BookingApi.Controllers
                         PartyTypeId = 10, // Agreement Party
                         CustomerId = request.AgreementPartyId.Value,
                         CreateUserId = request.UpdateUserId ?? "SYSTEM",
-                        CreateDttm = philippineTime,
+                        CreateDttm = utcNow,
                         UpdateUserId = request.UpdateUserId ?? "SYSTEM",
-                        UpdateDttm = philippineTime
+                        UpdateDttm = utcNow
                     });
                 }
 
@@ -689,9 +695,9 @@ namespace BookingApi.Controllers
                         PartyTypeId = 11, // Shipper Party
                         CustomerId = request.ShipperPartyId.Value,
                         CreateUserId = request.UpdateUserId ?? "SYSTEM",
-                        CreateDttm = philippineTime,
+                        CreateDttm = utcNow,
                         UpdateUserId = request.UpdateUserId ?? "SYSTEM",
-                        UpdateDttm = philippineTime
+                        UpdateDttm = utcNow
                     });
                 }
 
@@ -703,9 +709,9 @@ namespace BookingApi.Controllers
                         PartyTypeId = 12, // Consignee Party
                         CustomerId = request.ConsigneePartyId.Value,
                         CreateUserId = request.UpdateUserId ?? "SYSTEM",
-                        CreateDttm = philippineTime,
+                        CreateDttm = utcNow,
                         UpdateUserId = request.UpdateUserId ?? "SYSTEM",
-                        UpdateDttm = philippineTime
+                        UpdateDttm = utcNow
                     });
                 }
             }
@@ -828,7 +834,7 @@ namespace BookingApi.Controllers
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
 
-            var philippineTime = GetPhilippineTime();
+            var utcNow = GetUtcNow();
 
             // Try to map to a "cancelled" status if such exists
             var cancelStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.StatusDesc!.ToUpper().Contains("CANCEL"));
@@ -838,8 +844,8 @@ namespace BookingApi.Controllers
             }
 
             booking.BKCancelRemarks = req?.Remarks;
-            booking.CancelDttm = philippineTime;
-            booking.UpdateDttm = philippineTime;
+            booking.CancelDttm = utcNow;
+            booking.UpdateDttm = utcNow;
             booking.UpdateUserId = req?.UserId ?? "SYSTEM";
 
             _context.Bookings.Update(booking);
@@ -862,11 +868,11 @@ namespace BookingApi.Controllers
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null) return NotFound();
 
-            var philippineTime = GetPhilippineTime();
+            var utcNow = GetUtcNow();
 
             // Set StatusId to 6 (DELETED) - soft delete
             booking.StatusId = 6;
-            booking.UpdateDttm = philippineTime;
+            booking.UpdateDttm = utcNow;
             booking.UpdateUserId = req?.UserId ?? "SYSTEM";
 
             _context.Bookings.Update(booking);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
 import '../models/user_model.dart';
 import '../widgets/success_dialog.dart';
 
@@ -1370,9 +1371,62 @@ class _UserFormDialogState extends State<UserFormDialog> {
     );
   }
 
-  void _saveUser() {
+  void _saveUser() async {
     if (_formKey.currentState!.validate()) {
       final isEdit = widget.user != null;
+
+      // Show confirmation dialog for edits
+      if (isEdit) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              'UPDATE',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              'Are you sure you want to update this user:\n${_userCodeController.text}?',
+              style: const TextStyle(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text(
+                  'CANCEL',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Text(
+                  'CONFIRM',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed != true) return; // User clicked CANCEL or dismissed
+      }
 
       final userData = {
         'firstName': _firstNameController.text,
@@ -1385,8 +1439,13 @@ class _UserFormDialogState extends State<UserFormDialog> {
         'userCode': _userCodeController.text,
         'statusId': _selectedStatusId, // Use selected status from dropdown
         'userTypeId': _selectedUserTypeId,
-        'createUserId': 'SYSTEM',
+        'createUserId': UserSession().userId?.toString() ?? 'SYSTEM',
       };
+
+      // Add updateUserId for edits
+      if (isEdit) {
+        userData['updateUserId'] = UserSession().userId?.toString() ?? 'SYSTEM';
+      }
 
       // Password is required for new users, optional for edits
       if (!isEdit || _passwordController.text.isNotEmpty) {

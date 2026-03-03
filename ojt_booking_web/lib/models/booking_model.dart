@@ -192,7 +192,7 @@ class Booking {
       origin: json['originLocationDesc'] ?? 'Unknown',
       destination: json['destinationLocationDesc'] ?? 'Unknown',
       bookingDate: json['createDttm'] != null
-          ? DateTime.parse(json['createDttm'])
+          ? DateTime.parse(json['createDttm']).add(const Duration(hours: 8))
           : DateTime.now(),
       departureDate: json['vesselSchedule']?['etd'] != null
           ? DateTime.parse(json['vesselSchedule']['etd'])
@@ -232,11 +232,11 @@ class Booking {
       plateNumber: json['plateNumber'],
       driver: json['driver'],
       cancelDttm: json['cancelDttm'] != null
-          ? DateTime.parse(json['cancelDttm'])
+          ? DateTime.parse(json['cancelDttm']).add(const Duration(hours: 8))
           : null,
       cancelRemarks: json['bkCancelRemarks'],
       updateDttm: json['updateDttm'] != null
-          ? DateTime.parse(json['updateDttm'])
+          ? DateTime.parse(json['updateDttm']).add(const Duration(hours: 8))
           : null,
       createUserCode: json['createUserCode'],
       updateUserCode: json['updateUserCode'],
