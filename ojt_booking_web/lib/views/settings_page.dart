@@ -215,14 +215,20 @@ class _SettingsPageState extends State<SettingsPage> {
                     _buildProfileCard(),
                     const SizedBox(height: 32),
 
-                    // Management Section
-                    _buildSectionTitle(
-                      'Management',
-                      Icons.admin_panel_settings_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildUserManagementCard(),
-                    const SizedBox(height: 32),
+                    // Management Section (only show for non-Local users)
+                    if (_currentUserData != null &&
+                        _currentUserData!['userType']
+                                ?.toString()
+                                .toUpperCase() !=
+                            'LOCAL') ...[
+                      _buildSectionTitle(
+                        'Management',
+                        Icons.admin_panel_settings_rounded,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildUserManagementCard(),
+                      const SizedBox(height: 32),
+                    ],
 
                     // Session Section
                     _buildSectionTitle('Session', Icons.logout_rounded),

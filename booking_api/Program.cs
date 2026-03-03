@@ -4,6 +4,9 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure to listen on all network interfaces
+builder.WebHost.UseUrls("http://0.0.0.0:5022");
+
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(opts =>
 {

@@ -4,6 +4,7 @@ import '../models/booking_model.dart';
 import '../models/booking_stats.dart';
 import '../models/route_stats_model.dart';
 import '../services/api_service.dart';
+import '../services/user_session.dart';
 import 'history_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,6 +17,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final bool _isCalendarExpanded = false;
   final ApiService _apiService = ApiService();
+  final UserSession _userSession = UserSession();
   bool _isLoading = true; // Add loading state
 
   // Data — loaded from API (defaults shown until API responds)
@@ -158,6 +160,10 @@ class _HomePageState extends State<HomePage> {
       );
     }
 
+    // Build stats list - exclude "Number of Users" for Local users
+    final userType = _userSession.userType?.toUpperCase() ?? '';
+    final isLocalUser = userType == 'LOCAL';
+
     final stats = [
       {
         "title": "Total Bookings",
@@ -171,12 +177,14 @@ class _HomePageState extends State<HomePage> {
         "icon": Icons.today_rounded,
         "color": const Color(0xFFFF9800),
       },
-      {
-        "title": "Number of Users",
-        "count": "${_stats.numberOfUsers}",
-        "icon": Icons.people_rounded,
-        "color": const Color(0xFF4CAF50),
-      },
+      // Only show "Number of Users" for non-Local users
+      if (!isLocalUser)
+        {
+          "title": "Number of Users",
+          "count": "${_stats.numberOfUsers}",
+          "icon": Icons.people_rounded,
+          "color": const Color(0xFF4CAF50),
+        },
       {
         "title": "Cancelled",
         "count": "${_stats.cancelled}",

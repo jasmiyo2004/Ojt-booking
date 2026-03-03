@@ -4531,24 +4531,31 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Service Unit\\.nuget\\packages\\": {}
+    "C:\\Users\\OJT\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\MOBILE_APP\\Ojt-booking\\booking_api\\BookingApi.csproj",
+      "projectUniqueName": "C:\\Users\\OJT\\Desktop\\Ojt-booking\\booking_api\\BookingApi.csproj",
       "projectName": "BookingApi",
-      "projectPath": "D:\\MOBILE_APP\\Ojt-booking\\booking_api\\BookingApi.csproj",
-      "packagesPath": "C:\\Users\\Service Unit\\.nuget\\packages\\",
-      "outputPath": "D:\\MOBILE_APP\\Ojt-booking\\booking_api\\obj\\",
+      "projectPath": "C:\\Users\\OJT\\Desktop\\Ojt-booking\\booking_api\\BookingApi.csproj",
+      "packagesPath": "C:\\Users\\OJT\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\OJT\\Desktop\\Ojt-booking\\booking_api\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\Service Unit\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\OJT\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

@@ -14,8 +14,9 @@ import '../models/vessel_schedule_model.dart';
 import '../models/route_stats_model.dart';
 
 class ApiService {
-  // TODO: Replace with your actual C# API URL when ready
-  static const String baseUrl = 'http://localhost:5022/api';
+  // For phone via laptop hotspot, use laptop's hotspot IP
+  // For localhost testing, use 'http://localhost:5022/api'
+  static const String baseUrl = 'http://192.168.118.132:5022/api';
 
   // Singleton pattern - only one instance of ApiService
   static final ApiService _instance = ApiService._internal();
