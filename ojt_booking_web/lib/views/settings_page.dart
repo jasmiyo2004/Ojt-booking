@@ -1517,7 +1517,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
         'number': _numberController.text.trim(),
         'profilePicture':
             _base64Image ?? '', // Send empty string if null (photo removed)
-        'updateUserId': 'SYSTEM',
+        'updateUserId': UserSession().userId?.toString() ?? 'SYSTEM',
       };
 
       if (_passwordController.text.isNotEmpty) {
