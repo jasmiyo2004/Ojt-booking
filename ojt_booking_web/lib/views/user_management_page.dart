@@ -1106,15 +1106,48 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
   void _toggleUserStatus(User user) {
     final isActive = user.statusDesc == 'Active';
+
+    // For deactivation, show remarks dialog first
+    if (isActive) {
+      _showDeactivateRemarksDialog(user);
+    } else {
+      // For activation, show confirmation directly
+      _showActivateConfirmation(user);
+    }
+  }
+
+  void _showDeactivateRemarksDialog(User user) {
+    final remarksController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(isActive ? 'Deactivate User' : 'Activate User'),
-        content: Text(
-          isActive
-              ? 'Are you sure you want to deactivate ${user.fullName}?'
-              : 'Are you sure you want to activate ${user.fullName}?',
+        title: const Text('Deactivate User'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Are you sure you want to deactivate ${user.fullName}?'),
+            const SizedBox(height: 20),
+            const Text(
+              'Remarks:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: remarksController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Enter reason for deactivation...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                filled: true,
+                fillColor: Colors.grey[100],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -1123,45 +1156,168 @@ class _UserManagementPageState extends State<UserManagementPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final sm = ScaffoldMessenger.of(context);
-              Navigator.pop(context);
-              try {
-                await _apiService.updateUser(user.userId, {
-                  'statusId': isActive ? 2 : 1,
-                  'updateUserId': UserSession().userId?.toString() ?? 'SYSTEM',
-                });
-                await _loadData();
-                sm.showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isActive
-                          ? 'User deactivated successfully!'
-                          : 'User activated successfully!',
-                    ),
-                    backgroundColor: Colors.green,
+              final remarks = remarksController.text.trim();
+              if (remarks.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter remarks'),
+                    backgroundColor: Colors.orange,
                   ),
                 );
-              } catch (e) {
-                sm.showSnackBar(
-                  SnackBar(
-                    content: Text('Error updating user status: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                return;
               }
+
+              Navigator.pop(context);
+              await _deactivateUser(user, remarks);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: isActive ? Colors.red : Colors.green,
+              backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: Text(isActive ? 'Deactivate' : 'Activate'),
+            child: const Text('Deactivate'),
           ),
         ],
       ),
     );
+  }
+
+  void _showActivateConfirmation(User user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Activate User'),
+        content: Text('Are you sure you want to activate ${user.fullName}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _activateUser(user);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Activate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deactivateUser(User user, String remarks) async {
+    try {
+      await _apiService.updateUser(user.userId, {
+        'statusId': 2,
+        'remarks': remarks,
+        'updateUserId': UserSession().userId?.toString() ?? 'SYSTEM',
+      });
+      await _loadData();
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              'USER STATUS UPDATED',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              'User: ${user.userCode} has successfully INACTIVE.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deactivating user: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _activateUser(User user) async {
+    try {
+      await _apiService.updateUser(user.userId, {
+        'statusId': 1,
+        'updateUserId': UserSession().userId?.toString() ?? 'SYSTEM',
+      });
+      await _loadData();
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              'USER STATUS UPDATED',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              'User: ${user.userCode} has successfully ACTIVE.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error activating user: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -2073,7 +2229,8 @@ class _UserFormDialogState extends State<UserFormDialog> {
       'statusId': _selectedStatusId,
       'userTypeId': _selectedUserTypeId,
       'createUserId': UserSession().userId?.toString() ?? 'SYSTEM',
-      'profilePicture': _base64Image,
+      'profilePicture':
+          _base64Image ?? '', // Send empty string if null (photo removed)
     };
 
     if (isEdit) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../controllers/booking_controller.dart';
 import '../models/transport_service_model.dart';
 import '../models/payment_mode_model.dart';
@@ -1231,7 +1232,7 @@ class _BookingPageState extends State<BookingPage> {
                           // Create booking object with IDs
                           final bookingData = {
                             'BookingNo':
-                                'BK-${DateTime.now().millisecondsSinceEpoch}',
+                                'BK-${const Uuid().v4().substring(0, 8).toUpperCase()}',
                             'StatusId': 4, // BOOKED status
                             'TransportServiceId': selectedServiceId,
                             'OriginLocationId': selectedOriginId,
@@ -1243,14 +1244,24 @@ class _BookingPageState extends State<BookingPage> {
                             'VesselScheduleId': selectedVesselScheduleId,
                             'DeclaredValue':
                                 _declaredValueController.text.isNotEmpty
-                                ? double.tryParse(_declaredValueController.text)
+                                ? int.tryParse(
+                                    _declaredValueController.text.replaceAll(
+                                      RegExp(r'[^0-9]'),
+                                      '',
+                                    ),
+                                  )
                                 : null,
                             'CargoDescription':
                                 _cargoDescController.text.isNotEmpty
                                 ? _cargoDescController.text
                                 : null,
                             'Weight': _weightController.text.isNotEmpty
-                                ? double.tryParse(_weightController.text)
+                                ? int.tryParse(
+                                    _weightController.text.replaceAll(
+                                      RegExp(r'[^0-9]'),
+                                      '',
+                                    ),
+                                  )
                                 : null,
                             'ContainerId': selectedContainerId,
                             'SealNumber': _sealController.text.isNotEmpty

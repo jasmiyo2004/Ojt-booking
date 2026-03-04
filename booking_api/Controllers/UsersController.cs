@@ -203,10 +203,23 @@ namespace BookingApi.Controllers
                     user.UserInformation.Number = request.Number ?? user.UserInformation.Number;
                     user.UserInformation.UserCode = request.UserCode ?? user.UserInformation.UserCode;
                     user.UserInformation.StatusId = request.StatusId ?? user.UserInformation.StatusId;
-                    if (!string.IsNullOrEmpty(request.ProfilePicture))
+                    
+                    // Handle ProfilePicture: update if provided, delete if explicitly null
+                    if (request.ProfilePicture != null)
                     {
-                        user.UserInformation.ProfilePicture = Convert.FromBase64String(request.ProfilePicture);
+                        if (string.IsNullOrEmpty(request.ProfilePicture))
+                        {
+                            // Empty string means remove photo
+                            user.UserInformation.ProfilePicture = null;
+                        }
+                        else
+                        {
+                            // Non-empty string means update photo
+                            user.UserInformation.ProfilePicture = Convert.FromBase64String(request.ProfilePicture);
+                        }
                     }
+                    // If ProfilePicture is not in request, keep existing value
+                    
                     user.UserInformation.UpdateUserId = request.UpdateUserId ?? "SYSTEM";
                     user.UserInformation.UpdateDttm = DateTime.Now;
                 }

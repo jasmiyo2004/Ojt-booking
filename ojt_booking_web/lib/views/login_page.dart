@@ -211,8 +211,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Username Field
-                      _buildLabel('Username / Email / User Code'),
+                      // Email / User Code Field
+                      _buildLabel('Email / User Code'),
                       const SizedBox(height: 8),
                       _buildTextField(
                         controller: _usernameController,
@@ -220,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                         icon: Icons.person_outline_rounded,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter your username';
+                            return 'Please enter your email or user code';
                           }
                           return null;
                         },

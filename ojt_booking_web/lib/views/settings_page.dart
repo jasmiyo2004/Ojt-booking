@@ -879,14 +879,19 @@ class _SettingsPageState extends State<SettingsPage> {
   void _showEditProfileDialog() {
     if (_currentUserData == null) return;
 
+    // Store parent context
+    final parentContext = context;
+
     showDialog(
       context: context,
-      builder: (context) => _EditProfileDialog(
+      builder: (dialogContext) => _EditProfileDialog(
         userData: _currentUserData!,
         onSave: (updatedData) async {
           try {
+            print('Settings: Updating user profile...');
             final userId = _currentUserData!['userId'];
             await _apiService.updateUser(userId, updatedData);
+            print('Settings: Profile updated successfully');
 
             // Update session with new data
             final updatedUserData = Map<String, dynamic>.from(
@@ -902,21 +907,26 @@ class _SettingsPageState extends State<SettingsPage> {
                     .trim();
 
             _userSession.setUser(updatedUserData);
-            _loadCurrentUser();
+            await _loadCurrentUser();
 
-            if (mounted) {
+            print('Settings: Showing success dialog');
+            // Use parent context and ensure it's still mounted
+            if (mounted && parentContext.mounted) {
               showDialog(
-                context: context,
+                context: parentContext,
+                barrierDismissible: false,
                 builder: (context) => const SuccessDialog(
-                  title: 'Success',
-                  message: 'Profile updated successfully!',
+                  title: 'SUCCESS',
+                  message: 'Profile Successfully Updated',
                 ),
               );
             }
           } catch (e) {
-            if (mounted) {
+            print('Settings: Error updating profile: $e');
+            // Use parent context for error dialog too
+            if (mounted && parentContext.mounted) {
               ErrorDialog.show(
-                context: context,
+                context: parentContext,
                 title: 'Error',
                 message:
                     'Failed to update profile: ${e.toString().replaceAll('Exception: ', '')}',
@@ -1505,7 +1515,8 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
         'lastName': _lastNameController.text.trim(),
         'email': _emailController.text.trim(),
         'number': _numberController.text.trim(),
-        'profilePicture': _base64Image,
+        'profilePicture':
+            _base64Image ?? '', // Send empty string if null (photo removed)
         'updateUserId': 'SYSTEM',
       };
 
