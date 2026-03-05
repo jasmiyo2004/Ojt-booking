@@ -151,7 +151,6 @@ class _BookingPageState extends State<BookingPage> {
       final locations = await _apiService.getLocations();
 
       if (locations.isEmpty) {
-        print('Warning: No locations loaded');
         return;
       }
 
@@ -163,7 +162,6 @@ class _BookingPageState extends State<BookingPage> {
           (loc) => loc.locationId == booking.originLocationId,
         );
       } catch (e) {
-        print('Origin location not found, using first location');
         originLocation = locations.first;
       }
 
@@ -172,7 +170,6 @@ class _BookingPageState extends State<BookingPage> {
           (loc) => loc.locationId == booking.destinationLocationId,
         );
       } catch (e) {
-        print('Destination location not found, using first location');
         destinationLocation = locations.first;
       }
 
@@ -202,7 +199,6 @@ class _BookingPageState extends State<BookingPage> {
               (s) => s.vesselScheduleId == booking.vesselScheduleId,
             );
           } catch (e) {
-            print('Vessel schedule not found, using first schedule');
             matchingSchedule = schedules.first;
           }
 
@@ -212,7 +208,6 @@ class _BookingPageState extends State<BookingPage> {
         }
       }
     } catch (e) {
-      print('Error prefilling booking data: $e');
       // Don't show error to user, just log it
       // The form will still be usable with the basic data that was set
     }
@@ -234,7 +229,6 @@ class _BookingPageState extends State<BookingPage> {
         _isLoadingServices = false;
       });
     } catch (e) {
-      print('Error loading transport services: $e');
       setState(() {
         _isLoadingServices = false;
       });
@@ -257,7 +251,6 @@ class _BookingPageState extends State<BookingPage> {
         _isLoadingPaymentModes = false;
       });
     } catch (e) {
-      print('Error loading payment modes: $e');
       setState(() {
         _isLoadingPaymentModes = false;
       });
@@ -296,13 +289,7 @@ class _BookingPageState extends State<BookingPage> {
         selectedServiceId = matchingService.transportServiceId;
       });
 
-      print(
-        'Auto-selected Mode of Service: $selectedService (ID: $selectedServiceId)',
-      );
-      print(
-        'Origin Type: $selectedOriginType, Destination Type: $selectedDestinationType',
-      );
-    }
+      }
   }
 
   @override
@@ -1117,37 +1104,6 @@ class _BookingPageState extends State<BookingPage> {
                       child: ElevatedButton(
                         onPressed: () async {
                           // Debug: Print all field values
-                          print('=== BOOKING VALIDATION DEBUG ===');
-                          print('selectedOrigin: $selectedOrigin');
-                          print('selectedDestination: $selectedDestination');
-                          print('selectedService: $selectedService');
-                          print(
-                            'selectedAgreementParty: $selectedAgreementParty',
-                          );
-                          print('selectedShipper: $selectedShipper');
-                          print('selectedConsignee: $selectedConsignee');
-                          print('selectedEquipment: $selectedEquipment');
-                          print('selectedCommodity: $selectedCommodity');
-                          print('selectedVessel: $selectedVessel');
-                          print(
-                            'selectedVesselScheduleId: $selectedVesselScheduleId',
-                          );
-                          print('selectedPayment: $selectedPayment');
-                          print('selectedContainer: $selectedContainer');
-                          print(
-                            'departureDate: ${_departureDateController.text}',
-                          );
-                          print(
-                            'declaredValue: ${_declaredValueController.text}',
-                          );
-                          print('cargoDesc: ${_cargoDescController.text}');
-                          print('weight: ${_weightController.text}');
-                          print('seal: ${_sealController.text}');
-                          print('trucker: ${_truckerController.text}');
-                          print('plate: ${_plateController.text}');
-                          print('driver: ${_driverController.text}');
-                          print('================================');
-
                           // Validate required fields
                           if (selectedOrigin == "Select Origin" ||
                               selectedDestination == "Select Destination" ||
@@ -1169,62 +1125,40 @@ class _BookingPageState extends State<BookingPage> {
                               _plateController.text.isEmpty ||
                               _driverController.text.isEmpty) {
                             // Debug: Print which fields are missing
-                            print('=== MISSING FIELDS ===');
                             if (selectedOrigin == "Select Origin") {
-                              print('- Origin');
-                            }
+                              }
                             if (selectedDestination == "Select Destination") {
-                              print('- Destination');
-                            }
-                            if (selectedService == null) print('- Service');
-                            if (selectedAgreementParty == "Search Selection") {
-                              print('- Agreement Party');
-                            }
+                              }
+                            if (selectedService == null) if (selectedAgreementParty == "Search Selection") {
+                              }
                             if (selectedShipper == "Search Selection") {
-                              print('- Shipper');
-                            }
+                              }
                             if (selectedConsignee == "Search Selection") {
-                              print('- Consignee');
-                            }
+                              }
                             if (selectedEquipment == "Search Selection") {
-                              print('- Equipment');
-                            }
+                              }
                             if (selectedCommodity == "Search Selection") {
-                              print('- Commodity');
-                            }
+                              }
                             if (selectedVessel == "Search Selection") {
-                              print('- Vessel');
-                            }
+                              }
                             if (selectedVesselScheduleId == null) {
-                              print('- Vessel Schedule');
-                            }
-                            if (selectedPayment == null) print('- Payment');
-                            if (selectedContainer == "Search Selection") {
-                              print('- Container');
-                            }
+                              }
+                            if (selectedPayment == null) if (selectedContainer == "Search Selection") {
+                              }
                             if (_declaredValueController.text.isEmpty) {
-                              print('- Declared Value');
-                            }
+                              }
                             if (_cargoDescController.text.isEmpty) {
-                              print('- Cargo Description');
-                            }
+                              }
                             if (_weightController.text.isEmpty) {
-                              print('- Weight');
-                            }
+                              }
                             if (_sealController.text.isEmpty) {
-                              print('- Seal Number');
-                            }
+                              }
                             if (_truckerController.text.isEmpty) {
-                              print('- Trucker');
-                            }
+                              }
                             if (_plateController.text.isEmpty) {
-                              print('- Plate Number');
-                            }
+                              }
                             if (_driverController.text.isEmpty) {
-                              print('- Driver');
-                            }
-                            print('======================');
-
+                              }
                             ErrorDialog.showConfirmError(context);
                             return;
                           }
@@ -1318,16 +1252,11 @@ class _BookingPageState extends State<BookingPage> {
                               );
 
                               // UPDATE existing booking
-                              print(
-                                'Updating booking ${widget.bookingToEdit!.id} with data: $bookingData',
-                              );
                               final result = await _apiService
                                   .updateBookingWithIds(
                                     widget.bookingToEdit!.id,
                                     bookingData,
                                   );
-                              print('Booking updated successfully: $result');
-
                               // Hide loading snackbar
                               ScaffoldMessenger.of(
                                 context,
@@ -1377,11 +1306,8 @@ class _BookingPageState extends State<BookingPage> {
                               ),
                             );
 
-                            print('Creating booking with data: $bookingData');
                             final result = await _apiService
                                 .createBookingWithIds(bookingData);
-                            print('Booking created successfully: $result');
-
                             // Hide loading snackbar
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
