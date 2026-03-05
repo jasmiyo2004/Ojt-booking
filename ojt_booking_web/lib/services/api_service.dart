@@ -40,10 +40,6 @@ class ApiService {
   }) async {
     const url = '$baseUrl/auth/login';
     try {
-      print(
-        'API Service: Attempting login for $username as role $selectedRole',
-      );
-
       final response = await http
           .post(
             Uri.parse(url),
@@ -56,9 +52,6 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 10));
 
-      print('API Service: Login response status: ${response.statusCode}');
-      print('API Service: Login response body: ${response.body}');
-
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else if (response.statusCode == 401) {
@@ -68,7 +61,6 @@ class ApiService {
         throw Exception('Login failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('API Service: Login error: $e');
       rethrow;
     }
   }
@@ -93,10 +85,6 @@ class ApiService {
       }
     } catch (e, st) {
       // Fallback to mock data if API fails — log error + stack for debugging
-      print(
-        'API call failed (getBookings), falling back to mock data. Error: $e',
-      );
-      print(st);
       lastBookingsSource = 'mock';
       return getMockBookings();
     }
@@ -106,23 +94,13 @@ class ApiService {
   /// GET /api/bookings/recent
   Future<List<Booking>> getRecentBookings() async {
     try {
-      print(
-        'API Service: Fetching recent bookings from $baseUrl/bookings/recent',
-      );
       final response = await http
           .get(Uri.parse('$baseUrl/bookings/recent'))
           .timeout(const Duration(seconds: 10));
 
-      print(
-        'API Service: Recent bookings response status: ${response.statusCode}',
-      );
-
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
         lastBookingsSource = 'api';
-        print(
-          'API Service: Successfully loaded ${data.length} recent bookings from API',
-        );
         return data.map((json) => Booking.fromJson(json)).toList();
       } else {
         throw Exception(
@@ -131,10 +109,6 @@ class ApiService {
       }
     } catch (e, st) {
       // Fallback to mock data if API fails
-      print(
-        'API call failed (getRecentBookings), falling back to mock data. Error: $e',
-      );
-      print(st);
       lastBookingsSource = 'mock';
       return getMockBookings().take(5).toList();
     }
@@ -160,10 +134,7 @@ class ApiService {
   /// Later: POST /api/bookings
   Future<Booking> createBooking(Booking booking) async {
     try {
-      print('API Service: Attempting to create booking...');
       final jsonData = booking.toJson();
-      print('API Service: JSON data: $jsonData');
-
       final response = await http
           .post(
             Uri.parse('$baseUrl/bookings'),
@@ -172,14 +143,8 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 10));
 
-      print('API Service: Response status: ${response.statusCode}');
-      print('API Service: Response body: ${response.body}');
-
       if (response.statusCode == 201) {
         final createdBooking = Booking.fromJson(json.decode(response.body));
-        print(
-          'API Service: Booking created successfully with ID: ${createdBooking.id}',
-        );
         return createdBooking;
       } else {
         throw Exception(
@@ -188,10 +153,6 @@ class ApiService {
       }
     } catch (e, st) {
       // Fallback - just return the booking (for now)
-      print(
-        'API Service: API call failed for createBooking, returning local object. Error: $e',
-      );
-      print('API Service: Stack trace: $st');
       return booking;
     }
   }
@@ -201,8 +162,6 @@ class ApiService {
     Map<String, dynamic> bookingData,
   ) async {
     try {
-      print('API Service: Creating booking with IDs: $bookingData');
-
       final response = await http
           .post(
             Uri.parse('$baseUrl/bookings'),
@@ -210,9 +169,6 @@ class ApiService {
             body: json.encode(bookingData),
           )
           .timeout(const Duration(seconds: 10));
-
-      print('API Service: Response status: ${response.statusCode}');
-      print('API Service: Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return json.decode(response.body);
@@ -222,7 +178,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('API Service: Error creating booking: $e');
       rethrow;
     }
   }
@@ -233,8 +188,6 @@ class ApiService {
     Map<String, dynamic> bookingData,
   ) async {
     try {
-      print('API Service: Updating booking $id with IDs: $bookingData');
-
       final response = await http
           .put(
             Uri.parse('$baseUrl/bookings/$id'),
@@ -242,9 +195,6 @@ class ApiService {
             body: json.encode(bookingData),
           )
           .timeout(const Duration(seconds: 10));
-
-      print('API Service: Response status: ${response.statusCode}');
-      print('API Service: Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         // 204 No Content is also a valid success response for PUT
@@ -260,7 +210,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('API Service: Error updating booking: $e');
       rethrow;
     }
   }
@@ -283,10 +232,6 @@ class ApiService {
         throw Exception('Failed to update booking: ${response.statusCode}');
       }
     } catch (e, st) {
-      print(
-        'API call failed (updateBooking), returning local booking. Error: $e',
-      );
-      print(st);
       return booking;
     }
   }
@@ -305,8 +250,6 @@ class ApiService {
       if (response.statusCode == 200) return true;
       return false;
     } catch (e, st) {
-      print('API call failed (cancelBooking). Error: $e');
-      print(st);
       return false;
     }
   }
@@ -325,8 +268,6 @@ class ApiService {
       if (response.statusCode == 200) return true;
       return false;
     } catch (e, st) {
-      print('API call failed (deleteBooking). Error: $e');
-      print(st);
       return false;
     }
   }
@@ -346,16 +287,12 @@ class ApiService {
         List<dynamic> data = json.decode(response.body);
         // Debug: Print first location JSON
         if (data.isNotEmpty) {
-          print('DEBUG API: First location JSON: ${data[0]}');
-        }
+          }
         return data.map((json) => Location.fromJson(json)).toList();
       } else {
         throw Exception('Failed to load locations: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'API call failed (getLocations), falling back to mock data. Error: $e',
-      );
       return getMockLocations();
     }
   }
@@ -380,9 +317,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print(
-        'API call failed (getTransportServices), falling back to mock data. Error: $e',
-      );
       return getMockTransportServices();
     }
   }
@@ -395,22 +329,13 @@ class ApiService {
   /// Later: GET /api/bookings/stats
   Future<BookingStats> getBookingStats() async {
     try {
-      print(
-        'API Service: Attempting to get booking stats from $baseUrl/bookings/stats',
-      );
       final response = await http
           .get(Uri.parse('$baseUrl/bookings/stats'))
           .timeout(const Duration(seconds: 10));
-      print('API Service: Stats response status: ${response.statusCode}');
-      print('API Service: Stats response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         lastStatsSource = 'api';
         final stats = BookingStats.fromJson(data);
-        print(
-          'API Service: Successfully parsed stats: ${stats.totalBookings} total, ${stats.bookedToday} booked today, ${stats.numberOfUsers} users, ${stats.cancelled} cancelled',
-        );
         return stats;
       } else {
         throw Exception(
@@ -419,14 +344,10 @@ class ApiService {
       }
     } catch (e) {
       // Fallback to mock data if API fails — log details
-      print(
-        'API call failed (getBookingStats), falling back to mock stats. Error: $e',
-      );
       try {
         rethrow; // rethrow to capture stack if available
       } catch (err, st) {
-        print(st);
-      }
+        }
       lastStatsSource = 'mock';
       return getMockStats();
     }
@@ -448,12 +369,9 @@ class ApiService {
         url = '$baseUrl/bookings/routes?startDate=$startStr&endDate=$endStr';
       }
 
-      print('API Service: Fetching route statistics from $url');
       final response = await http
           .get(Uri.parse(url))
           .timeout(const Duration(seconds: 10));
-
-      print('API Service: Route stats response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -464,7 +382,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('API call failed (getRouteStatistics): $e');
       rethrow;
     }
   }
@@ -643,9 +560,6 @@ class ApiService {
         throw Exception('Failed to load payment modes: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'API call failed (getPaymentModes), falling back to mock data. Error: $e',
-      );
       return getMockPaymentModes();
     }
   }
@@ -673,9 +587,6 @@ class ApiService {
         throw Exception('Failed to load equipment: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'API call failed (getEquipment), falling back to mock data. Error: $e',
-      );
       return getMockEquipment();
     }
   }
@@ -716,9 +627,6 @@ class ApiService {
         throw Exception('Failed to load vessels: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'API call failed (getVessels), falling back to mock data. Error: $e',
-      );
       return getMockVessels();
     }
   }
@@ -747,9 +655,6 @@ class ApiService {
         throw Exception('Failed to load commodities: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'API call failed (getCommodities), falling back to mock data. Error: $e',
-      );
       return getMockCommodities();
     }
   }
@@ -785,9 +690,6 @@ class ApiService {
         throw Exception('Failed to load containers: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'API call failed (getContainers), falling back to mock data. Error: $e',
-      );
       return getMockContainers();
     }
   }
@@ -845,9 +747,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print(
-        'API call failed (getAgreementParties), falling back to mock data. Error: $e',
-      );
       return getMockAgreementParties();
     }
   }
@@ -870,9 +769,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print(
-        'API call failed (getShipperParties), falling back to mock data. Error: $e',
-      );
       return getMockShipperParties();
     }
   }
@@ -895,9 +791,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print(
-        'API call failed (getConsigneeParties), falling back to mock data. Error: $e',
-      );
       return getMockConsigneeParties();
     }
   }
@@ -1038,9 +931,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print(
-        'API call failed (getVesselSchedules), falling back to mock data. Error: $e',
-      );
       return getMockVesselSchedules(
         originLocationId: originLocationId,
         destinationLocationId: destinationLocationId,
@@ -1211,27 +1101,17 @@ class ApiService {
   Future<List<dynamic>> getUsers() async {
     const url = '$baseUrl/users';
     try {
-      print('API Service: Fetching users from $url');
-
       final response = await http
           .get(Uri.parse(url), headers: {'Content-Type': 'application/json'})
           .timeout(const Duration(seconds: 10));
 
-      print('API Service: getUsers response status: ${response.statusCode}');
-      print('API Service: getUsers response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print('API Service: Loaded ${data.length} users from API');
         return data;
       } else {
-        print(
-          'API Service: Failed to load users - Status ${response.statusCode}',
-        );
         throw Exception('Failed to load users: ${response.statusCode}');
       }
     } catch (e) {
-      print('API call failed (getUsers), falling back to mock data. Error: $e');
       return getMockUsers();
     }
   }
@@ -1241,24 +1121,14 @@ class ApiService {
   Future<List<dynamic>> getUserTypes() async {
     const url = '$baseUrl/usertypes';
     try {
-      print('API Service: Fetching user types from $url');
-
       final response = await http
           .get(Uri.parse(url), headers: {'Content-Type': 'application/json'})
           .timeout(const Duration(seconds: 10));
 
-      print(
-        'API Service: getUserTypes response status: ${response.statusCode}',
-      );
-      print('API Service: getUserTypes response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print('API Service: Loaded ${data.length} user types from API');
-
         // If API returns empty array, use mock data
         if (data.isEmpty) {
-          print('API Service: API returned empty array, using mock data');
           return getMockUserTypes();
         }
 
@@ -1267,9 +1137,6 @@ class ApiService {
         throw Exception('Failed to load user types: ${response.statusCode}');
       }
     } catch (e) {
-      print(
-        'API call failed (getUserTypes), falling back to mock data. Error: $e',
-      );
       return getMockUserTypes();
     }
   }
@@ -1279,8 +1146,6 @@ class ApiService {
   Future<Map<String, dynamic>> createUser(Map<String, dynamic> userData) async {
     const url = '$baseUrl/users';
     try {
-      print('API Service: Creating user with data: $userData');
-
       final response = await http
           .post(
             Uri.parse(url),
@@ -1288,9 +1153,6 @@ class ApiService {
             body: json.encode(userData),
           )
           .timeout(const Duration(seconds: 10));
-
-      print('API Service: Response status: ${response.statusCode}');
-      print('API Service: Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return json.decode(response.body);
@@ -1300,7 +1162,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('API Service: Error creating user: $e');
       rethrow;
     }
   }
@@ -1329,7 +1190,6 @@ class ApiService {
         );
       }
     } catch (e) {
-      print('API Service: Error updating user: $e');
       rethrow;
     }
   }
@@ -1345,7 +1205,6 @@ class ApiService {
 
       return response.statusCode == 204 || response.statusCode == 200;
     } catch (e) {
-      print('API Service: Error deleting user: $e');
       return false;
     }
   }

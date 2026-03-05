@@ -113,9 +113,6 @@ class Booking {
 
   // Convert JSON from API to Booking object
   factory Booking.fromJson(Map<String, dynamic> json) {
-    // Debug: Print the raw JSON to see what we're receiving
-    print('DEBUG - Booking JSON: ${json.toString()}');
-
     // Extract party information from bookingParties array
     String? agreementParty;
     String? shipperParty;
@@ -125,12 +122,10 @@ class Booking {
     int? consigneePartyId;
 
     if (json['bookingParties'] != null) {
-      print('DEBUG - bookingParties: ${json['bookingParties']}');
       final parties = json['bookingParties'] as List;
       for (var party in parties) {
         final partyTypeId = party['partyTypeId'];
         final customer = party['customer'];
-        print('DEBUG - Party: partyTypeId=$partyTypeId, customer=$customer');
         if (customer != null) {
           String customerName = 'Unknown';
 
@@ -157,7 +152,6 @@ class Booking {
             if (nameParts.isNotEmpty) {
               customerName = nameParts.join(' ');
             }
-            print('DEBUG - Customer name: $customerName');
           }
 
           final customerCode = customer['customerCd'] ?? '';
@@ -177,12 +171,6 @@ class Booking {
         }
       }
     }
-
-    print('DEBUG - Container: ${json['container']}');
-    print('DEBUG - SealNumber: ${json['sealNumber']}');
-    print(
-      'DEBUG - Parties: agreement=$agreementParty, shipper=$shipperParty, consignee=$consigneeParty',
-    );
 
     return Booking(
       id: json['bookingId']?.toString() ?? '0',

@@ -116,7 +116,6 @@ class _HistoryPageState extends State<HistoryPage> {
         });
       }
     } catch (e) {
-      print('Error loading bookings: $e');
       if (mounted) {
         setState(() {
           _bookings = [];

@@ -50,12 +50,8 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
-      print('HomePage: Loading dashboard data...');
       final stats = await _apiService.getBookingStats();
       final recent = await _apiService.getRecentBookings();
-      print(
-        'HomePage: Data loaded successfully. Stats: ${stats.totalBookings} total',
-      );
       if (mounted) {
         setState(() {
           _stats = stats;
@@ -65,9 +61,6 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       // Fallback to mock data when API fails
-      print(
-        'HomePage: Failed to load dashboard data from API, using mock data. Error: $e',
-      );
       final mockStats = _apiService.getMockStats();
       final mockBookings = _apiService.getMockBookings();
       if (mounted) {
@@ -98,7 +91,6 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      print('Failed to load route statistics: $e');
       if (mounted) {
         setState(() {
           _isLoadingRoutes = false;

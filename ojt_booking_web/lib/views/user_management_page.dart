@@ -2147,7 +2147,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
             ],
           ),
           content: const Text(
-            'USER CODE ALREADY EXISTED, PLEASE TRY ANOTHER',
+            'User code already exists, please try another',
             style: TextStyle(fontSize: 14),
           ),
           actions: [

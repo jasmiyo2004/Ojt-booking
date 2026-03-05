@@ -64,7 +64,6 @@ class _SettingsPageState extends State<SettingsPage> {
             });
           }
         } catch (e) {
-          print('Error fetching user profile picture: $e');
           setState(() {
             _currentUserData = sessionData;
             _isLoading = false;
@@ -74,7 +73,6 @@ class _SettingsPageState extends State<SettingsPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error loading current user: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -888,10 +886,8 @@ class _SettingsPageState extends State<SettingsPage> {
         userData: _currentUserData!,
         onSave: (updatedData) async {
           try {
-            print('Settings: Updating user profile...');
             final userId = _currentUserData!['userId'];
             await _apiService.updateUser(userId, updatedData);
-            print('Settings: Profile updated successfully');
 
             // Update session with new data
             final updatedUserData = Map<String, dynamic>.from(
@@ -909,7 +905,6 @@ class _SettingsPageState extends State<SettingsPage> {
             _userSession.setUser(updatedUserData);
             await _loadCurrentUser();
 
-            print('Settings: Showing success dialog');
             // Use parent context and ensure it's still mounted
             if (mounted && parentContext.mounted) {
               showDialog(
@@ -922,7 +917,6 @@ class _SettingsPageState extends State<SettingsPage> {
               );
             }
           } catch (e) {
-            print('Settings: Error updating profile: $e');
             // Use parent context for error dialog too
             if (mounted && parentContext.mounted) {
               ErrorDialog.show(
