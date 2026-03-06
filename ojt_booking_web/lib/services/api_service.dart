@@ -83,7 +83,7 @@ class ApiService {
       } else {
         throw Exception('Failed to load bookings: ${response.statusCode}');
       }
-    } catch (e, st) {
+    } catch (e) {
       // Fallback to mock data if API fails — log error + stack for debugging
       lastBookingsSource = 'mock';
       return getMockBookings();
@@ -107,7 +107,7 @@ class ApiService {
           'Failed to load recent bookings: ${response.statusCode}',
         );
       }
-    } catch (e, st) {
+    } catch (e) {
       // Fallback to mock data if API fails
       lastBookingsSource = 'mock';
       return getMockBookings().take(5).toList();
@@ -151,7 +151,7 @@ class ApiService {
           'Failed to create booking: ${response.statusCode} - ${response.body}',
         );
       }
-    } catch (e, st) {
+    } catch (e) {
       // Fallback - just return the booking (for now)
       return booking;
     }
@@ -231,7 +231,7 @@ class ApiService {
       } else {
         throw Exception('Failed to update booking: ${response.statusCode}');
       }
-    } catch (e, st) {
+    } catch (e) {
       return booking;
     }
   }
@@ -249,7 +249,7 @@ class ApiService {
           .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) return true;
       return false;
-    } catch (e, st) {
+    } catch (e) {
       return false;
     }
   }
@@ -267,7 +267,7 @@ class ApiService {
           .timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) return true;
       return false;
-    } catch (e, st) {
+    } catch (e) {
       return false;
     }
   }
@@ -346,7 +346,7 @@ class ApiService {
       // Fallback to mock data if API fails — log details
       try {
         rethrow; // rethrow to capture stack if available
-      } catch (err, st) {
+      } catch (err) {
         }
       lastStatsSource = 'mock';
       return getMockStats();

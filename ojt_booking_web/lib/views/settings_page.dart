@@ -1301,17 +1301,49 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                         _firstNameController,
                         Icons.person_outline,
                         required: true,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter First Name';
+                          }
+                          if (!RegExp(
+                            r'^[a-zA-Z\s]+$',
+                          ).hasMatch(value.trim())) {
+                            return 'First name must contain letters only';
+                          }
+                          return null;
+                        },
                       ),
                       _buildTextField(
                         'Middle Name',
                         _middleNameController,
                         Icons.person_outline,
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty) {
+                            if (!RegExp(
+                              r'^[a-zA-Z\s]+$',
+                            ).hasMatch(value.trim())) {
+                              return 'Middle name must contain letters only';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                       _buildTextField(
                         'Last Name',
                         _lastNameController,
                         Icons.person_outline,
                         required: true,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter Last Name';
+                          }
+                          if (!RegExp(
+                            r'^[a-zA-Z\s]+$',
+                          ).hasMatch(value.trim())) {
+                            return 'Last name must contain letters only';
+                          }
+                          return null;
+                        },
                       ),
                       _buildTextField(
                         'Email',
@@ -1319,6 +1351,18 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                         Icons.email,
                         required: true,
                         keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter Email';
+                          }
+                          // Email validation regex
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(value.trim())) {
+                            return 'The email must be a valid email address';
+                          }
+                          return null;
+                        },
                       ),
                       _buildTextField(
                         'Number',

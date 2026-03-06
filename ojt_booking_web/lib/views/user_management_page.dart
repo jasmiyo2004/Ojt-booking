@@ -1687,17 +1687,49 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         _firstNameController,
                         Icons.person_outline,
                         required: true,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter First Name';
+                          }
+                          if (!RegExp(
+                            r'^[a-zA-Z\s]+$',
+                          ).hasMatch(value.trim())) {
+                            return 'First name must contain letters only';
+                          }
+                          return null;
+                        },
                       ),
                       _buildTextField(
                         'Middle Name',
                         _middleNameController,
                         Icons.person_outline,
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty) {
+                            if (!RegExp(
+                              r'^[a-zA-Z\s]+$',
+                            ).hasMatch(value.trim())) {
+                              return 'Middle name must contain letters only';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                       _buildTextField(
                         'Last Name',
                         _lastNameController,
                         Icons.person_outline,
                         required: true,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter Last Name';
+                          }
+                          if (!RegExp(
+                            r'^[a-zA-Z\s]+$',
+                          ).hasMatch(value.trim())) {
+                            return 'Last name must contain letters only';
+                          }
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 8),
@@ -1712,6 +1744,17 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         Icons.email_outlined,
                         required: true,
                         keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter Email';
+                          }
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(value.trim())) {
+                            return 'The email must be a valid email address';
+                          }
+                          return null;
+                        },
                       ),
                       _buildTextField(
                         'Phone Number',
@@ -1985,7 +2028,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
             ),
           ),
           DropdownButtonFormField<T>(
-            value: value,
+            initialValue: value,
             style: const TextStyle(fontSize: 13, color: Color(0xFF212121)),
             decoration: InputDecoration(
               hintText: 'Select $label',

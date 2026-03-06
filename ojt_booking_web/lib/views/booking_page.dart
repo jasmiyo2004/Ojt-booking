@@ -25,6 +25,7 @@ class BookingPage extends StatefulWidget {
 class _BookingPageState extends State<BookingPage> {
   final BookingController _controller = BookingController();
   final ApiService _apiService = ApiService();
+  final _formKey = GlobalKey<FormState>();
 
   // Variables to hold selected values
   String selectedOrigin = "Select Origin";
@@ -288,8 +289,7 @@ class _BookingPageState extends State<BookingPage> {
         selectedService = matchingService.transportServiceDesc;
         selectedServiceId = matchingService.transportServiceId;
       });
-
-      }
+    }
   }
 
   @override
@@ -379,1019 +379,1056 @@ class _BookingPageState extends State<BookingPage> {
               ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Page title
-                    Text(
-                      widget.bookingToEdit != null
-                          ? 'Edit Booking'
-                          : 'New Booking',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF212121),
-                        letterSpacing: -0.5,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Page title
+                      Text(
+                        widget.bookingToEdit != null
+                            ? 'Edit Booking'
+                            : 'New Booking',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF212121),
+                          letterSpacing: -0.5,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.bookingToEdit != null
-                          ? 'Update the booking details below'
-                          : 'Fill in the details to create a new booking transaction',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w500,
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.bookingToEdit != null
+                            ? 'Update the booking details below'
+                            : 'Fill in the details to create a new booking transaction',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // === Route Information Section ===
-                    _buildSectionCard(
-                      icon: Icons.route_rounded,
-                      title: 'Route Information',
-                      children: [
-                        _buildSearchField(
-                          label: 'Origin',
-                          value: selectedOrigin,
-                          icon: Icons.flight_takeoff_rounded,
-                          onTap: () async {
-                            await _controller.showLocationPicker(
-                              context: context,
-                              title: "Origin",
-                              currentLocationId: selectedDestinationId,
-                              errorType: 'origin',
-                              onSelect:
-                                  (locationDesc, locationId, locationTypeDesc) {
-                                    setState(() {
-                                      selectedOrigin = locationDesc;
-                                      selectedOriginId = locationId;
-                                      selectedOriginType = locationTypeDesc;
-                                    });
-                                    // Auto-update Mode of Service if both locations are selected
-                                    _updateModeOfService();
-                                  },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedOrigin = "Select Origin";
-                              selectedOriginId = null;
-                              selectedOriginType = null;
-                              // Clear Mode of Service when origin is cleared
-                              selectedService = null;
-                              selectedServiceId = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _buildSearchField(
-                          label: 'Destination',
-                          value: selectedDestination,
-                          icon: Icons.flight_land_rounded,
-                          onTap: () async {
-                            await _controller.showLocationPicker(
-                              context: context,
-                              title: "Destination",
-                              currentLocationId: selectedOriginId,
-                              errorType: 'destination',
-                              onSelect:
-                                  (locationDesc, locationId, locationTypeDesc) {
-                                    setState(() {
-                                      selectedDestination = locationDesc;
-                                      selectedDestinationId = locationId;
-                                      selectedDestinationType =
-                                          locationTypeDesc;
-                                    });
-                                    // Auto-update Mode of Service if both locations are selected
-                                    _updateModeOfService();
-                                  },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedDestination = "Select Destination";
-                              selectedDestinationId = null;
-                              selectedDestinationType = null;
-                              // Clear Mode of Service when destination is cleared
-                              selectedService = null;
-                              selectedServiceId = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _isLoadingServices
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8F9FA),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.grey[300]!,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.miscellaneous_services_rounded,
-                                      color: Colors.grey[500],
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text('Loading services...'),
-                                    const Spacer(),
-                                    const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8F9FA),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.grey[300]!,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.miscellaneous_services_rounded,
-                                      color: Colors.grey[500],
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Mode of Service',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey[500],
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.3,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            selectedService ??
-                                                'Auto-filled based on locations',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              color: selectedService != null
-                                                  ? const Color(0xFF212121)
-                                                  : Colors.grey[400],
-                                              fontWeight:
-                                                  selectedService != null
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w400,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFF4CAF50,
-                                        ).withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(
-                                        Icons.auto_awesome,
-                                        color: Color(0xFF4CAF50),
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // === Vessel & Schedule Section ===
-                    _buildSectionCard(
-                      icon: Icons.directions_boat_rounded,
-                      title: 'Vessel & Schedule',
-                      children: [
-                        _buildSearchField(
-                          label: 'Vessel Name',
-                          value: selectedVessel,
-                          icon: Icons.sailing_rounded,
-                          onTap: () {
-                            _controller.showVesselPicker(
-                              context: context,
-                              onSelect: (vesselDesc, vesselId) {
-                                setState(() {
-                                  selectedVessel = vesselDesc;
-                                  selectedVesselId = vesselId;
-                                });
-                              },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedVessel = "Search Selection";
-                              selectedVesselId = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _buildSearchField(
-                          label: 'Vessel Schedule',
-                          value: selectedVesselSchedule,
-                          icon: Icons.schedule_rounded,
-                          onTap: () {
-                            // Check if origin, destination, and vessel are selected
-                            if (selectedOriginId == null ||
-                                selectedDestinationId == null ||
-                                selectedVesselId == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Please select Origin, Destination, and Vessel first',
-                                  ),
-                                  backgroundColor: Colors.orange,
-                                ),
+                      // === Route Information Section ===
+                      _buildSectionCard(
+                        icon: Icons.route_rounded,
+                        title: 'Route Information',
+                        children: [
+                          _buildSearchField(
+                            label: 'Origin',
+                            value: selectedOrigin,
+                            icon: Icons.flight_takeoff_rounded,
+                            onTap: () async {
+                              await _controller.showLocationPicker(
+                                context: context,
+                                title: "Origin",
+                                currentLocationId: selectedDestinationId,
+                                errorType: 'origin',
+                                onSelect:
+                                    (
+                                      locationDesc,
+                                      locationId,
+                                      locationTypeDesc,
+                                    ) {
+                                      setState(() {
+                                        selectedOrigin = locationDesc;
+                                        selectedOriginId = locationId;
+                                        selectedOriginType = locationTypeDesc;
+                                      });
+                                      // Auto-update Mode of Service if both locations are selected
+                                      _updateModeOfService();
+                                    },
                               );
-                              return;
-                            }
-
-                            _controller.showVesselSchedulePicker(
-                              context: context,
-                              originLocationId: selectedOriginId!,
-                              destinationLocationId: selectedDestinationId!,
-                              vesselId: selectedVesselId!,
-                              onSelect:
-                                  (scheduleDisplay, scheduleId, scheduleObj) {
-                                    setState(() {
-                                      selectedVesselSchedule = scheduleDisplay;
-                                      selectedVesselScheduleId = scheduleId;
-                                      selectedVesselScheduleObj = scheduleObj;
-                                    });
-                                  },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedVesselSchedule = "Search Selection";
-                              selectedVesselScheduleId = null;
-                              selectedVesselScheduleObj = null;
-                            });
-                          },
-                        ),
-                        // Display vessel schedule details when selected
-                        if (selectedVesselScheduleObj != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFFBF0),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(
-                                  0xFFD4AF37,
-                                ).withValues(alpha: 0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Vessel Schedule',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1B5E20),
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedOrigin = "Select Origin";
+                                selectedOriginId = null;
+                                selectedOriginType = null;
+                                // Clear Mode of Service when origin is cleared
+                                selectedService = null;
+                                selectedServiceId = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _buildSearchField(
+                            label: 'Destination',
+                            value: selectedDestination,
+                            icon: Icons.flight_land_rounded,
+                            onTap: () async {
+                              await _controller.showLocationPicker(
+                                context: context,
+                                title: "Destination",
+                                currentLocationId: selectedOriginId,
+                                errorType: 'destination',
+                                onSelect:
+                                    (
+                                      locationDesc,
+                                      locationId,
+                                      locationTypeDesc,
+                                    ) {
+                                      setState(() {
+                                        selectedDestination = locationDesc;
+                                        selectedDestinationId = locationId;
+                                        selectedDestinationType =
+                                            locationTypeDesc;
+                                      });
+                                      // Auto-update Mode of Service if both locations are selected
+                                      _updateModeOfService();
+                                    },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedDestination = "Select Destination";
+                                selectedDestinationId = null;
+                                selectedDestinationType = null;
+                                // Clear Mode of Service when destination is cleared
+                                selectedService = null;
+                                selectedServiceId = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _isLoadingServices
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F9FA),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.miscellaneous_services_rounded,
+                                        color: Colors.grey[500],
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Text('Loading services...'),
+                                      const Spacer(),
+                                      const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F9FA),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.miscellaneous_services_rounded,
+                                        color: Colors.grey[500],
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Mode of Service',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.grey[500],
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              selectedService ??
+                                                  'Auto-filled based on locations',
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                color: selectedService != null
+                                                    ? const Color(0xFF212121)
+                                                    : Colors.grey[400],
+                                                fontWeight:
+                                                    selectedService != null
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w400,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(
+                                            0xFF4CAF50,
+                                          ).withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.auto_awesome,
+                                          color: Color(0xFF4CAF50),
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                // Table header
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'POL',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[700],
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'POD',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[700],
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'ETD',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[700],
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        'ETA',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[700],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                // Table data
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        '${selectedVesselScheduleObj!.originPortDesc} (${selectedVesselScheduleObj!.originPortCd})',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Color(0xFF424242),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        '${selectedVesselScheduleObj!.destinationPortDesc} (${selectedVesselScheduleObj!.destinationPortCd})',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Color(0xFF424242),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        selectedVesselScheduleObj!.etd != null
-                                            ? () {
-                                                final adjustedEtd =
-                                                    selectedVesselScheduleObj!
-                                                        .etd!
-                                                        .add(
-                                                          const Duration(
-                                                            hours: 8,
-                                                          ),
-                                                        );
-                                                return '${adjustedEtd.year}-${adjustedEtd.month.toString().padLeft(2, '0')}-${adjustedEtd.day.toString().padLeft(2, '0')} ${adjustedEtd.hour.toString().padLeft(2, '0')}:${adjustedEtd.minute.toString().padLeft(2, '0')}:00';
-                                              }()
-                                            : 'N/A',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Color(0xFF424242),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        selectedVesselScheduleObj!.eta != null
-                                            ? () {
-                                                final adjustedEta =
-                                                    selectedVesselScheduleObj!
-                                                        .eta!
-                                                        .add(
-                                                          const Duration(
-                                                            hours: 8,
-                                                          ),
-                                                        );
-                                                return '${adjustedEta.year}-${adjustedEta.month.toString().padLeft(2, '0')}-${adjustedEta.day.toString().padLeft(2, '0')} ${adjustedEta.hour.toString().padLeft(2, '0')}:${adjustedEta.minute.toString().padLeft(2, '0')}:00';
-                                              }()
-                                            : 'N/A',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Color(0xFF424242),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
-                      ],
-                    ),
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // === Cargo Details Section ===
-                    _buildSectionCard(
-                      icon: Icons.inventory_2_rounded,
-                      title: 'Cargo Details',
-                      children: [
-                        _buildSearchField(
-                          label: 'Equipment Type',
-                          value: selectedEquipment,
-                          icon: Icons.build_rounded,
-                          onTap: () {
-                            _controller.showEquipmentPicker(
-                              context: context,
-                              onSelect: (equipmentDesc, equipmentId) {
-                                setState(() {
-                                  selectedEquipment = equipmentDesc;
-                                  selectedEquipmentId = equipmentId;
-                                });
-                              },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedEquipment = "Search Selection";
-                              selectedEquipmentId = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _buildSearchField(
-                          label: 'Commodity Name',
-                          value: selectedCommodity,
-                          icon: Icons.category_rounded,
-                          onTap: () {
-                            _controller.showCommodityPicker(
-                              context: context,
-                              onSelect: (commodityDesc, commodityId) {
-                                setState(() {
-                                  selectedCommodity = commodityDesc;
-                                  selectedCommodityId = commodityId;
-                                });
-                              },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedCommodity = "Search Selection";
-                              selectedCommodityId = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStyledTextField(
-                                controller: _weightController,
-                                label: 'Weight',
-                                hint: 'kg',
-                                icon: Icons.scale_rounded,
+                      // === Vessel & Schedule Section ===
+                      _buildSectionCard(
+                        icon: Icons.directions_boat_rounded,
+                        title: 'Vessel & Schedule',
+                        children: [
+                          _buildSearchField(
+                            label: 'Vessel Name',
+                            value: selectedVessel,
+                            icon: Icons.sailing_rounded,
+                            onTap: () {
+                              _controller.showVesselPicker(
+                                context: context,
+                                onSelect: (vesselDesc, vesselId) {
+                                  setState(() {
+                                    selectedVessel = vesselDesc;
+                                    selectedVesselId = vesselId;
+                                  });
+                                },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedVessel = "Search Selection";
+                                selectedVesselId = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _buildSearchField(
+                            label: 'Vessel Schedule',
+                            value: selectedVesselSchedule,
+                            icon: Icons.schedule_rounded,
+                            onTap: () {
+                              // Check if origin, destination, and vessel are selected
+                              if (selectedOriginId == null ||
+                                  selectedDestinationId == null ||
+                                  selectedVesselId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Please select Origin, Destination, and Vessel first',
+                                    ),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              _controller.showVesselSchedulePicker(
+                                context: context,
+                                originLocationId: selectedOriginId!,
+                                destinationLocationId: selectedDestinationId!,
+                                vesselId: selectedVesselId!,
+                                onSelect:
+                                    (scheduleDisplay, scheduleId, scheduleObj) {
+                                      setState(() {
+                                        selectedVesselSchedule =
+                                            scheduleDisplay;
+                                        selectedVesselScheduleId = scheduleId;
+                                        selectedVesselScheduleObj = scheduleObj;
+                                      });
+                                    },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedVesselSchedule = "Search Selection";
+                                selectedVesselScheduleId = null;
+                                selectedVesselScheduleObj = null;
+                              });
+                            },
+                          ),
+                          // Display vessel schedule details when selected
+                          if (selectedVesselScheduleObj != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFFBF0),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFD4AF37,
+                                  ).withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildStyledTextField(
-                                controller: _declaredValueController,
-                                label: 'Declared Value',
-                                hint: '₱0.00',
-                                icon: Icons.monetization_on_rounded,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Vessel Schedule',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1B5E20),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Table header
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'POL',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'POD',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'ETD',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          'ETA',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Table data
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          '${selectedVesselScheduleObj!.originPortDesc} (${selectedVesselScheduleObj!.originPortCd})',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF424242),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          '${selectedVesselScheduleObj!.destinationPortDesc} (${selectedVesselScheduleObj!.destinationPortCd})',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF424242),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          selectedVesselScheduleObj!.etd != null
+                                              ? () {
+                                                  final adjustedEtd =
+                                                      selectedVesselScheduleObj!
+                                                          .etd!
+                                                          .add(
+                                                            const Duration(
+                                                              hours: 8,
+                                                            ),
+                                                          );
+                                                  return '${adjustedEtd.year}-${adjustedEtd.month.toString().padLeft(2, '0')}-${adjustedEtd.day.toString().padLeft(2, '0')} ${adjustedEtd.hour.toString().padLeft(2, '0')}:${adjustedEtd.minute.toString().padLeft(2, '0')}:00';
+                                                }()
+                                              : 'N/A',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF424242),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          selectedVesselScheduleObj!.eta != null
+                                              ? () {
+                                                  final adjustedEta =
+                                                      selectedVesselScheduleObj!
+                                                          .eta!
+                                                          .add(
+                                                            const Duration(
+                                                              hours: 8,
+                                                            ),
+                                                          );
+                                                  return '${adjustedEta.year}-${adjustedEta.month.toString().padLeft(2, '0')}-${adjustedEta.day.toString().padLeft(2, '0')} ${adjustedEta.hour.toString().padLeft(2, '0')}:${adjustedEta.minute.toString().padLeft(2, '0')}:00';
+                                                }()
+                                              : 'N/A',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF424242),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 14),
-                        _buildStyledTextField(
-                          controller: _cargoDescController,
-                          label: 'Cargo Description',
-                          hint: 'Describe the cargo',
-                          icon: Icons.description_rounded,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildSearchField(
-                          label: 'Container Number',
-                          value: selectedContainer,
-                          icon: Icons.inventory_2_rounded,
-                          onTap: () {
-                            _controller.showContainerPicker(
-                              context: context,
-                              onSelect: (containerNo, containerId) {
-                                setState(() {
-                                  selectedContainer = containerNo;
-                                  selectedContainerId = containerId;
-                                });
-                              },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedContainer = "Search Selection";
-                              selectedContainerId = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _buildStyledTextField(
-                          controller: _sealController,
-                          label: 'Seal Number',
-                          hint: 'SEAL-XXX',
-                          icon: Icons.verified_rounded,
-                        ),
+                        ],
+                      ),
 
-                        const SizedBox(height: 14),
-                        _buildSearchField(
-                          label: 'Agreement Party',
-                          value: selectedAgreementParty,
-                          icon: Icons.handshake_rounded,
-                          onTap: () {
-                            _controller.showAgreementPartyPicker(
-                              context: context,
-                              onSelect: (customerName, customerId, customerObj) {
-                                setState(() {
-                                  selectedAgreementParty =
-                                      '${customerObj.fullName} (${customerObj.customerCd})';
-                                  selectedAgreementPartyId = customerId;
-                                  selectedAgreementPartyObj = customerObj;
-                                });
-                              },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedAgreementParty = "Search Selection";
-                              selectedAgreementPartyId = null;
-                              selectedAgreementPartyObj = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _buildSearchField(
-                          label: 'Shipper Party',
-                          value: selectedShipper,
-                          icon: Icons.local_shipping_rounded,
-                          onTap: () {
-                            _controller.showShipperPartyPicker(
-                              context: context,
-                              onSelect: (customerName, customerId, customerObj) {
-                                setState(() {
-                                  selectedShipper =
-                                      '${customerObj.fullName} (${customerObj.customerCd})';
-                                  selectedShipperId = customerId;
-                                  selectedShipperObj = customerObj;
-                                });
-                              },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedShipper = "Search Selection";
-                              selectedShipperId = null;
-                              selectedShipperObj = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        _buildSearchField(
-                          label: 'Consignee Party',
-                          value: selectedConsignee,
-                          icon: Icons.person_pin_rounded,
-                          onTap: () {
-                            _controller.showConsigneePartyPicker(
-                              context: context,
-                              onSelect: (consigneeName, consigneeId, consigneeObj) {
-                                setState(() {
-                                  selectedConsignee =
-                                      '${consigneeObj.fullName} (${consigneeObj.customerCd})';
-                                  selectedConsigneeId = consigneeId;
-                                  selectedConsigneeObj = consigneeObj;
-                                });
-                              },
-                            );
-                          },
-                          onClear: () {
-                            setState(() {
-                              selectedConsignee = "Search Selection";
-                              selectedConsigneeId = null;
-                              selectedConsigneeObj = null;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
+                      const SizedBox(height: 16),
 
-                    const SizedBox(height: 16),
-
-                    // === Payment & Trucking Section ===
-                    _buildSectionCard(
-                      icon: Icons.payment_rounded,
-                      title: 'Payment & Trucking',
-                      children: [
-                        _isLoadingPaymentModes
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8F9FA),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.grey[300]!,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.account_balance_wallet_rounded,
-                                      color: Colors.grey[500],
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text('Loading payment modes...'),
-                                    const Spacer(),
-                                    const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : _buildStyledDropdown(
-                                label: 'Mode of Payment',
-                                value: selectedPayment,
-                                icon: Icons.account_balance_wallet_rounded,
-                                items: _paymentModes
-                                    .map((pm) => pm.paymentModeDesc)
-                                    .toList(),
-                                onChanged: (val) {
+                      // === Cargo Details Section ===
+                      _buildSectionCard(
+                        icon: Icons.inventory_2_rounded,
+                        title: 'Cargo Details',
+                        children: [
+                          _buildSearchField(
+                            label: 'Equipment Type',
+                            value: selectedEquipment,
+                            icon: Icons.build_rounded,
+                            onTap: () {
+                              _controller.showEquipmentPicker(
+                                context: context,
+                                onSelect: (equipmentDesc, equipmentId) {
                                   setState(() {
-                                    selectedPayment = val;
-                                    // Find and store the payment mode ID
-                                    try {
-                                      final mode = _paymentModes.firstWhere(
-                                        (pm) => pm.paymentModeDesc == val,
-                                      );
-                                      selectedPaymentId = mode.paymentModeId;
-                                    } catch (e) {
-                                      selectedPaymentId = null;
-                                    }
+                                    selectedEquipment = equipmentDesc;
+                                    selectedEquipmentId = equipmentId;
                                   });
                                 },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedEquipment = "Search Selection";
+                                selectedEquipmentId = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _buildSearchField(
+                            label: 'Commodity Name',
+                            value: selectedCommodity,
+                            icon: Icons.category_rounded,
+                            onTap: () {
+                              _controller.showCommodityPicker(
+                                context: context,
+                                onSelect: (commodityDesc, commodityId) {
+                                  setState(() {
+                                    selectedCommodity = commodityDesc;
+                                    selectedCommodityId = commodityId;
+                                  });
+                                },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedCommodity = "Search Selection";
+                                selectedCommodityId = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStyledTextField(
+                                  controller: _weightController,
+                                  label: 'Weight',
+                                  hint: 'kg',
+                                  icon: Icons.scale_rounded,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Please enter weight';
+                                    }
+                                    if (!RegExp(
+                                      r'^[0-9]+$',
+                                    ).hasMatch(value.trim())) {
+                                      return 'Numbers only';
+                                    }
+                                    return null;
+                                  },
+                                ),
                               ),
-                        const SizedBox(height: 14),
-                        _buildStyledTextField(
-                          controller: _truckerController,
-                          label: 'Trucker',
-                          hint: 'Trucking company',
-                          icon: Icons.local_shipping_outlined,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildStyledTextField(
-                          controller: _plateController,
-                          label: 'Plate Number',
-                          hint: 'ABC-1234',
-                          icon: Icons.confirmation_number_rounded,
-                        ),
-                        const SizedBox(height: 14),
-                        _buildStyledTextField(
-                          controller: _driverController,
-                          label: 'Driver',
-                          hint: 'Driver name',
-                          icon: Icons.person_rounded,
-                        ),
-                      ],
-                    ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildStyledTextField(
+                                  controller: _declaredValueController,
+                                  label: 'Declared Value',
+                                  hint: '₱0.00',
+                                  icon: Icons.monetization_on_rounded,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Please enter declared value';
+                                    }
+                                    if (!RegExp(
+                                      r'^[0-9]+$',
+                                    ).hasMatch(value.trim())) {
+                                      return 'Numbers only';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _buildStyledTextField(
+                            controller: _cargoDescController,
+                            label: 'Cargo Description',
+                            hint: 'Describe the cargo',
+                            icon: Icons.description_rounded,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildSearchField(
+                            label: 'Container Number',
+                            value: selectedContainer,
+                            icon: Icons.inventory_2_rounded,
+                            onTap: () {
+                              _controller.showContainerPicker(
+                                context: context,
+                                onSelect: (containerNo, containerId) {
+                                  setState(() {
+                                    selectedContainer = containerNo;
+                                    selectedContainerId = containerId;
+                                  });
+                                },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedContainer = "Search Selection";
+                                selectedContainerId = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _buildStyledTextField(
+                            controller: _sealController,
+                            label: 'Seal Number',
+                            hint: 'SEAL-XXX',
+                            icon: Icons.verified_rounded,
+                          ),
 
-                    const SizedBox(height: 28),
+                          const SizedBox(height: 14),
+                          _buildSearchField(
+                            label: 'Agreement Party',
+                            value: selectedAgreementParty,
+                            icon: Icons.handshake_rounded,
+                            onTap: () {
+                              _controller.showAgreementPartyPicker(
+                                context: context,
+                                onSelect: (customerName, customerId, customerObj) {
+                                  setState(() {
+                                    selectedAgreementParty =
+                                        '${customerObj.fullName} (${customerObj.customerCd})';
+                                    selectedAgreementPartyId = customerId;
+                                    selectedAgreementPartyObj = customerObj;
+                                  });
+                                },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedAgreementParty = "Search Selection";
+                                selectedAgreementPartyId = null;
+                                selectedAgreementPartyObj = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _buildSearchField(
+                            label: 'Shipper Party',
+                            value: selectedShipper,
+                            icon: Icons.local_shipping_rounded,
+                            onTap: () {
+                              _controller.showShipperPartyPicker(
+                                context: context,
+                                onSelect: (customerName, customerId, customerObj) {
+                                  setState(() {
+                                    selectedShipper =
+                                        '${customerObj.fullName} (${customerObj.customerCd})';
+                                    selectedShipperId = customerId;
+                                    selectedShipperObj = customerObj;
+                                  });
+                                },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedShipper = "Search Selection";
+                                selectedShipperId = null;
+                                selectedShipperObj = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _buildSearchField(
+                            label: 'Consignee Party',
+                            value: selectedConsignee,
+                            icon: Icons.person_pin_rounded,
+                            onTap: () {
+                              _controller.showConsigneePartyPicker(
+                                context: context,
+                                onSelect:
+                                    (consigneeName, consigneeId, consigneeObj) {
+                                      setState(() {
+                                        selectedConsignee =
+                                            '${consigneeObj.fullName} (${consigneeObj.customerCd})';
+                                        selectedConsigneeId = consigneeId;
+                                        selectedConsigneeObj = consigneeObj;
+                                      });
+                                    },
+                              );
+                            },
+                            onClear: () {
+                              setState(() {
+                                selectedConsignee = "Search Selection";
+                                selectedConsigneeId = null;
+                                selectedConsigneeObj = null;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
 
-                    // Submit Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          // Debug: Print all field values
-                          // Validate required fields
-                          if (selectedOrigin == "Select Origin" ||
-                              selectedDestination == "Select Destination" ||
-                              selectedService == null ||
-                              selectedAgreementParty == "Search Selection" ||
-                              selectedShipper == "Search Selection" ||
-                              selectedConsignee == "Search Selection" ||
-                              selectedEquipment == "Search Selection" ||
-                              selectedCommodity == "Search Selection" ||
-                              selectedVessel == "Search Selection" ||
-                              selectedVesselScheduleId == null ||
-                              selectedPayment == null ||
-                              selectedContainer == "Search Selection" ||
-                              _declaredValueController.text.isEmpty ||
-                              _cargoDescController.text.isEmpty ||
-                              _weightController.text.isEmpty ||
-                              _sealController.text.isEmpty ||
-                              _truckerController.text.isEmpty ||
-                              _plateController.text.isEmpty ||
-                              _driverController.text.isEmpty) {
-                            // Debug: Print which fields are missing
-                            if (selectedOrigin == "Select Origin") {
-                              }
-                            if (selectedDestination == "Select Destination") {
-                              }
-                            if (selectedService == null) if (selectedAgreementParty == "Search Selection") {
-                              }
-                            if (selectedShipper == "Search Selection") {
-                              }
-                            if (selectedConsignee == "Search Selection") {
-                              }
-                            if (selectedEquipment == "Search Selection") {
-                              }
-                            if (selectedCommodity == "Search Selection") {
-                              }
-                            if (selectedVessel == "Search Selection") {
-                              }
-                            if (selectedVesselScheduleId == null) {
-                              }
-                            if (selectedPayment == null) if (selectedContainer == "Search Selection") {
-                              }
-                            if (_declaredValueController.text.isEmpty) {
-                              }
-                            if (_cargoDescController.text.isEmpty) {
-                              }
-                            if (_weightController.text.isEmpty) {
-                              }
-                            if (_sealController.text.isEmpty) {
-                              }
-                            if (_truckerController.text.isEmpty) {
-                              }
-                            if (_plateController.text.isEmpty) {
-                              }
-                            if (_driverController.text.isEmpty) {
-                              }
-                            ErrorDialog.showConfirmError(context);
-                            return;
-                          }
+                      const SizedBox(height: 16),
 
-                          // Create booking object with IDs
-                          final bookingData = {
-                            'BookingNo':
-                                'BK-${const Uuid().v4().substring(0, 8).toUpperCase()}',
-                            'StatusId': 4, // BOOKED status
-                            'TransportServiceId': selectedServiceId,
-                            'OriginLocationId': selectedOriginId,
-                            'DestinationLocationId': selectedDestinationId,
-                            'PaymentModeId': selectedPaymentId,
-                            'EquipmentId': selectedEquipmentId,
-                            'CommodityId': selectedCommodityId,
-                            'VesselId': selectedVesselId,
-                            'VesselScheduleId': selectedVesselScheduleId,
-                            'DeclaredValue':
-                                _declaredValueController.text.isNotEmpty
-                                ? int.tryParse(
-                                    _declaredValueController.text.replaceAll(
-                                      RegExp(r'[^0-9]'),
-                                      '',
+                      // === Payment & Trucking Section ===
+                      _buildSectionCard(
+                        icon: Icons.payment_rounded,
+                        title: 'Payment & Trucking',
+                        children: [
+                          _isLoadingPaymentModes
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F9FA),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.grey[300]!,
+                                      width: 1,
                                     ),
-                                  )
-                                : null,
-                            'CargoDescription':
-                                _cargoDescController.text.isNotEmpty
-                                ? _cargoDescController.text
-                                : null,
-                            'Weight': _weightController.text.isNotEmpty
-                                ? int.tryParse(
-                                    _weightController.text.replaceAll(
-                                      RegExp(r'[^0-9]'),
-                                      '',
-                                    ),
-                                  )
-                                : null,
-                            'ContainerId': selectedContainerId,
-                            'SealNumber': _sealController.text.isNotEmpty
-                                ? _sealController.text
-                                : null,
-                            'Trucker': _truckerController.text.isNotEmpty
-                                ? _truckerController.text
-                                : null,
-                            'PlateNumber': _plateController.text.isNotEmpty
-                                ? _plateController.text
-                                : null,
-                            'Driver': _driverController.text.isNotEmpty
-                                ? _driverController.text
-                                : null,
-                            'CreateUserId':
-                                UserSession().userId?.toString() ?? 'SYSTEM',
-                            'CreateDttm': DateTime.now()
-                                .toUtc()
-                                .toIso8601String(),
-                            'UpdateUserId':
-                                UserSession().userId?.toString() ?? 'SYSTEM',
-                            'UpdateDttm': DateTime.now()
-                                .toUtc()
-                                .toIso8601String(),
-                            // Party IDs
-                            'AgreementPartyId': selectedAgreementPartyId,
-                            'ShipperPartyId': selectedShipperId,
-                            'ConsigneePartyId': selectedConsigneeId,
-                          };
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.account_balance_wallet_rounded,
+                                        color: Colors.grey[500],
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Text('Loading payment modes...'),
+                                      const Spacer(),
+                                      const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : _buildStyledDropdown(
+                                  label: 'Mode of Payment',
+                                  value: selectedPayment,
+                                  icon: Icons.account_balance_wallet_rounded,
+                                  items: _paymentModes
+                                      .map((pm) => pm.paymentModeDesc)
+                                      .toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      selectedPayment = val;
+                                      // Find and store the payment mode ID
+                                      try {
+                                        final mode = _paymentModes.firstWhere(
+                                          (pm) => pm.paymentModeDesc == val,
+                                        );
+                                        selectedPaymentId = mode.paymentModeId;
+                                      } catch (e) {
+                                        selectedPaymentId = null;
+                                      }
+                                    });
+                                  },
+                                ),
+                          const SizedBox(height: 14),
+                          _buildStyledTextField(
+                            controller: _truckerController,
+                            label: 'Trucker',
+                            hint: 'Trucking company',
+                            icon: Icons.local_shipping_outlined,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildStyledTextField(
+                            controller: _plateController,
+                            label: 'Plate Number',
+                            hint: 'ABC-1234',
+                            icon: Icons.confirmation_number_rounded,
+                          ),
+                          const SizedBox(height: 14),
+                          _buildStyledTextField(
+                            controller: _driverController,
+                            label: 'Driver',
+                            hint: 'Driver name',
+                            icon: Icons.person_rounded,
+                          ),
+                        ],
+                      ),
 
-                          // Determine if we're creating or updating
-                          final isEditing = widget.bookingToEdit != null;
+                      const SizedBox(height: 28),
 
-                          // If editing, show confirmation dialog first
-                          if (isEditing) {
-                            final confirmed =
-                                await ConfirmDialog.showUpdateBooking(
-                                  context,
-                                  bookingNumber:
-                                      widget.bookingToEdit!.referenceNumber,
-                                );
-
-                            if (!confirmed) {
-                              return; // User cancelled
+                      // Submit Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            // Validate form fields first
+                            if (_formKey.currentState != null &&
+                                !_formKey.currentState!.validate()) {
+                              return;
                             }
 
-                            // User confirmed, proceed with update
+                            // Debug: Print all field values
+                            // Validate required fields
+                            if (selectedOrigin == "Select Origin" ||
+                                selectedDestination == "Select Destination" ||
+                                selectedService == null ||
+                                selectedAgreementParty == "Search Selection" ||
+                                selectedShipper == "Search Selection" ||
+                                selectedConsignee == "Search Selection" ||
+                                selectedEquipment == "Search Selection" ||
+                                selectedCommodity == "Search Selection" ||
+                                selectedVessel == "Search Selection" ||
+                                selectedVesselScheduleId == null ||
+                                selectedPayment == null ||
+                                selectedContainer == "Search Selection" ||
+                                _declaredValueController.text.isEmpty ||
+                                _cargoDescController.text.isEmpty ||
+                                _weightController.text.isEmpty ||
+                                _sealController.text.isEmpty ||
+                                _truckerController.text.isEmpty ||
+                                _plateController.text.isEmpty ||
+                                _driverController.text.isEmpty) {
+                              // Debug: Print which fields are missing
+                              if (selectedOrigin == "Select Origin") {}
+                              if (selectedDestination ==
+                                  "Select Destination") {}
+                              if (selectedService == null)
+                                if (selectedAgreementParty ==
+                                    "Search Selection") {}
+                              if (selectedShipper == "Search Selection") {}
+                              if (selectedConsignee == "Search Selection") {}
+                              if (selectedEquipment == "Search Selection") {}
+                              if (selectedCommodity == "Search Selection") {}
+                              if (selectedVessel == "Search Selection") {}
+                              if (selectedVesselScheduleId == null) {}
+                              if (selectedPayment == null)
+                                if (selectedContainer == "Search Selection") {}
+                              if (_declaredValueController.text.isEmpty) {}
+                              if (_cargoDescController.text.isEmpty) {}
+                              if (_weightController.text.isEmpty) {}
+                              if (_sealController.text.isEmpty) {}
+                              if (_truckerController.text.isEmpty) {}
+                              if (_plateController.text.isEmpty) {}
+                              if (_driverController.text.isEmpty) {}
+                              ErrorDialog.showConfirmError(context);
+                              return;
+                            }
+
+                            // Create booking object with IDs
+                            final bookingData = {
+                              'BookingNo':
+                                  'BK-${const Uuid().v4().substring(0, 8).toUpperCase()}',
+                              'StatusId': 4, // BOOKED status
+                              'TransportServiceId': selectedServiceId,
+                              'OriginLocationId': selectedOriginId,
+                              'DestinationLocationId': selectedDestinationId,
+                              'PaymentModeId': selectedPaymentId,
+                              'EquipmentId': selectedEquipmentId,
+                              'CommodityId': selectedCommodityId,
+                              'VesselId': selectedVesselId,
+                              'VesselScheduleId': selectedVesselScheduleId,
+                              'DeclaredValue':
+                                  _declaredValueController.text.isNotEmpty
+                                  ? int.tryParse(
+                                      _declaredValueController.text.replaceAll(
+                                        RegExp(r'[^0-9]'),
+                                        '',
+                                      ),
+                                    )
+                                  : null,
+                              'CargoDescription':
+                                  _cargoDescController.text.isNotEmpty
+                                  ? _cargoDescController.text
+                                  : null,
+                              'Weight': _weightController.text.isNotEmpty
+                                  ? int.tryParse(
+                                      _weightController.text.replaceAll(
+                                        RegExp(r'[^0-9]'),
+                                        '',
+                                      ),
+                                    )
+                                  : null,
+                              'ContainerId': selectedContainerId,
+                              'SealNumber': _sealController.text.isNotEmpty
+                                  ? _sealController.text
+                                  : null,
+                              'Trucker': _truckerController.text.isNotEmpty
+                                  ? _truckerController.text
+                                  : null,
+                              'PlateNumber': _plateController.text.isNotEmpty
+                                  ? _plateController.text
+                                  : null,
+                              'Driver': _driverController.text.isNotEmpty
+                                  ? _driverController.text
+                                  : null,
+                              'CreateUserId':
+                                  UserSession().userId?.toString() ?? 'SYSTEM',
+                              'CreateDttm': DateTime.now()
+                                  .toUtc()
+                                  .toIso8601String(),
+                              'UpdateUserId':
+                                  UserSession().userId?.toString() ?? 'SYSTEM',
+                              'UpdateDttm': DateTime.now()
+                                  .toUtc()
+                                  .toIso8601String(),
+                              // Party IDs
+                              'AgreementPartyId': selectedAgreementPartyId,
+                              'ShipperPartyId': selectedShipperId,
+                              'ConsigneePartyId': selectedConsigneeId,
+                            };
+
+                            // Determine if we're creating or updating
+                            final isEditing = widget.bookingToEdit != null;
+
+                            // If editing, show confirmation dialog first
+                            if (isEditing) {
+                              final confirmed =
+                                  await ConfirmDialog.showUpdateBooking(
+                                    context,
+                                    bookingNumber:
+                                        widget.bookingToEdit!.referenceNumber,
+                                  );
+
+                              if (!confirmed) {
+                                return; // User cancelled
+                              }
+
+                              // User confirmed, proceed with update
+                              try {
+                                // Show loading
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Updating booking...'),
+                                  ),
+                                );
+
+                                // UPDATE existing booking
+                                final result = await _apiService
+                                    .updateBookingWithIds(
+                                      widget.bookingToEdit!.id,
+                                      bookingData,
+                                    );
+                                // Hide loading snackbar
+                                ScaffoldMessenger.of(
+                                  context,
+                                ).hideCurrentSnackBar();
+
+                                // Show success dialog and wait for user to click OK
+                                await showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => SuccessDialog(
+                                    title: 'UPDATE BOOKING',
+                                    message:
+                                        'Booking Number: ${result['bookingNo'] ?? widget.bookingToEdit!.referenceNumber} was successfully updated.',
+                                    bookingNumber: null,
+                                  ),
+                                );
+
+                                // Navigate back to history page AFTER user clicks OK
+                                Navigator.of(context).pop();
+                              } catch (e) {
+                                // Error
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Failed to update booking: $e',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                              return; // Exit early after handling update
+                            }
+
+                            // CREATE new booking (show confirmation first)
                             try {
+                              // Show confirmation dialog first
+                              final confirmed =
+                                  await ConfirmDialog.showSubmitBooking(
+                                    context,
+                                  );
+
+                              if (!confirmed) {
+                                return; // User cancelled
+                              }
+
+                              // User confirmed, proceed with creation
                               // Show loading
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Updating booking...'),
+                                  content: Text('Creating booking...'),
                                 ),
                               );
 
-                              // UPDATE existing booking
                               final result = await _apiService
-                                  .updateBookingWithIds(
-                                    widget.bookingToEdit!.id,
-                                    bookingData,
-                                  );
+                                  .createBookingWithIds(bookingData);
                               // Hide loading snackbar
                               ScaffoldMessenger.of(
                                 context,
                               ).hideCurrentSnackBar();
 
-                              // Show success dialog and wait for user to click OK
-                              await showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (context) => SuccessDialog(
-                                  title: 'UPDATE BOOKING',
-                                  message:
-                                      'Booking Number: ${result['bookingNo'] ?? widget.bookingToEdit!.referenceNumber} was successfully updated.',
-                                  bookingNumber: null,
-                                ),
+                              // Show success dialog
+                              SuccessDialog.show(
+                                context,
+                                title: 'BOOKING CREATED',
+                                message:
+                                    'Your booking was successfully created!',
+                                bookingNumber: result['bookingNo'] ?? 'N/A',
                               );
 
-                              // Navigate back to history page AFTER user clicks OK
-                              Navigator.of(context).pop();
+                              // Clear form
+                              setState(() {
+                                selectedOrigin = "Select Origin";
+                                selectedDestination = "Select Destination";
+                                selectedAgreementParty = "Search Selection";
+                                selectedShipper = "Search Selection";
+                                selectedConsignee = "Search Selection";
+                                selectedCommodity = "Search Selection";
+                                selectedEquipment = "Search Selection";
+                                selectedVessel = "Search Selection";
+                                selectedContainer = "Search Selection";
+                                selectedService = null;
+                                selectedPayment = null;
+                              });
+
+                              _departureDateController.clear();
+                              _declaredValueController.clear();
+                              _cargoDescController.clear();
+                              _weightController.clear();
+                              _sealController.clear();
+                              _truckerController.clear();
+                              _plateController.clear();
+                              _driverController.clear();
                             } catch (e) {
                               // Error
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Failed to update booking: $e'),
+                                  content: Text('Failed to create booking: $e'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
                             }
-                            return; // Exit early after handling update
-                          }
-
-                          // CREATE new booking (show confirmation first)
-                          try {
-                            // Show confirmation dialog first
-                            final confirmed =
-                                await ConfirmDialog.showSubmitBooking(context);
-
-                            if (!confirmed) {
-                              return; // User cancelled
-                            }
-
-                            // User confirmed, proceed with creation
-                            // Show loading
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Creating booking...'),
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFD4AF37),
+                            foregroundColor: Colors.white,
+                            elevation: 4,
+                            shadowColor: const Color(
+                              0xFFD4AF37,
+                            ).withValues(alpha: 0.4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.check_circle_rounded, size: 22),
+                              const SizedBox(width: 10),
+                              Text(
+                                widget.bookingToEdit != null
+                                    ? 'UPDATE BOOKING'
+                                    : 'SUBMIT BOOKING',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
                               ),
-                            );
-
-                            final result = await _apiService
-                                .createBookingWithIds(bookingData);
-                            // Hide loading snackbar
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-                            // Show success dialog
-                            SuccessDialog.show(
-                              context,
-                              title: 'BOOKING CREATED',
-                              message: 'Your booking was successfully created!',
-                              bookingNumber: result['bookingNo'] ?? 'N/A',
-                            );
-
-                            // Clear form
-                            setState(() {
-                              selectedOrigin = "Select Origin";
-                              selectedDestination = "Select Destination";
-                              selectedAgreementParty = "Search Selection";
-                              selectedShipper = "Search Selection";
-                              selectedConsignee = "Search Selection";
-                              selectedCommodity = "Search Selection";
-                              selectedEquipment = "Search Selection";
-                              selectedVessel = "Search Selection";
-                              selectedContainer = "Search Selection";
-                              selectedService = null;
-                              selectedPayment = null;
-                            });
-
-                            _departureDateController.clear();
-                            _declaredValueController.clear();
-                            _cargoDescController.clear();
-                            _weightController.clear();
-                            _sealController.clear();
-                            _truckerController.clear();
-                            _plateController.clear();
-                            _driverController.clear();
-                          } catch (e) {
-                            // Error
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Failed to create booking: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFD4AF37),
-                          foregroundColor: Colors.white,
-                          elevation: 4,
-                          shadowColor: const Color(
-                            0xFFD4AF37,
-                          ).withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.check_circle_rounded, size: 22),
-                            const SizedBox(width: 10),
-                            Text(
-                              widget.bookingToEdit != null
-                                  ? 'UPDATE BOOKING'
-                                  : 'SUBMIT BOOKING',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+                      const SizedBox(height: 24),
+                    ],
+                  ), // Column
+                ), // Form
+              ), // SingleChildScrollView
+            ), // Container
+          ), // Expanded
+        ], // Column children
+      ), // Column
+    ); // Scaffold
   }
 
   // === REUSABLE WIDGETS ===
@@ -1544,13 +1581,17 @@ class _BookingPageState extends State<BookingPage> {
     required String label,
     required String hint,
     required IconData icon,
+    String? Function(String?)? validator,
+    String? errorText,
   }) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
+        errorText: errorText,
         prefixIcon: Icon(icon, color: Colors.grey[500], size: 20),
         labelStyle: TextStyle(
           fontSize: 13,
@@ -1575,6 +1616,14 @@ class _BookingPageState extends State<BookingPage> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),
     );
